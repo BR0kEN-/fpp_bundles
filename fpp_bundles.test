@@ -1,0 +1,152 @@
+<?php
+/**
+ * @file
+ * Test the "FPP Bundles" module functionality.
+ */
+
+/**
+ * Class FppBundlesTestCase
+ */
+class FppBundlesTestCase extends \DrupalWebTestCase {
+  /**
+   * Give display information to the SimpleTest system.
+   *
+   * @return array
+   *   Keyed array with information for SimpleTest.
+   */
+  public static function getInfo() {
+    $name = 'FPP Bundles';
+
+    return array(
+      'name' => $name,
+      'group' => $name,
+      'description' => "Ensure that the \"$name\" provided functions properly.",
+    );
+  }
+
+  /**
+   * Setup the test environment.
+   */
+  public function setUp() {
+    parent::setUp('fpp_bundles');
+
+    $this->drupalLogin($this->drupalCreateUser(array(\FppBundlesModule::ENTITY_ACCESS)));
+  }
+
+  // ===========================================================================
+  // Testing methods.
+
+  /**
+   * Creating a new bundle.
+   */
+  public function testCreateBundle() {
+    $url = $this->getActionUrl('create');
+
+    // Go to the creating page.
+    $this->drupalGet($url);
+    $this->assertResponse(200, 'User is allowed to see the page for creating a bundle.');
+    $this->assertFieldByName('name', '', 'Found the "name" field in creating form.');
+
+    // Create new bundle.
+    $edit = $this->getRandomBundleData();
+    $this->drupalPost($this->getActionUrl('create'), $edit, t('Create bundle'));
+    $this->assertResponse(200, 'The bundle was successfully created.');
+    $this->assertText($edit['name'], 'Found the name of created bundle in table.');
+  }
+
+  /**
+   * Editing an existing bundle.
+   */
+  public function testUpdateBundle() {
+    // Create the bundle.
+    $bundle = $this->createBundleProgrammatically();
+    $url = $this->getActionUrl('update/' . $bundle['bid']);
+
+    // Go to the editing page.
+    $this->drupalGet($url);
+    $this->assertResponse(200, 'User is allowed to see the page for editing a bundle.');
+    $this->assertFieldByName('name', $bundle['name'], 'Found filled field "name" on the edit form.');
+
+    // Update data.
+    $edit = $this->getRandomBundleData();
+    $this->drupalPost($url, $edit, t('Update bundle'));
+    $this->assertResponse(200, 'The bundle was successfully updated.');
+    $this->assertText($edit['name'], 'Found the name of updated bundle in table.');
+  }
+
+  /**
+   * Removing an existing bundle.
+   */
+  public function testRemoveBundle() {
+    // Create the bundle.
+    $bundle = $this->createBundleProgrammatically();
+    $url = $this->getActionUrl('remove/' . $bundle['bid']);
+
+    // Go to the removing page.
+    $this->drupalGet($url);
+    $this->assertResponse(200, 'User is allowed to see the page for removing a bundle.');
+    $this->assertText($bundle['name'], 'Found filled field "name" on the edit form.');
+
+    // Remove the bundle.
+    $edit = $this->getRandomBundleData();
+    $this->drupalPost($url, array(), t('Remove bundle'));
+    $this->assertResponse(200, 'The bundle was successfully removed.');
+    $this->assertNoText($edit['name'], 'Name of the bundle was not found in bundles table.');
+  }
+
+  // ===========================================================================
+  // Custom methods.
+
+  /**
+   * Build an URL to page on that can be performed some action.
+   *
+   * @param string $action
+   *   URL suffix.
+   *
+   * @return string
+   *   Page URL.
+   */
+  public function getActionUrl($action) {
+    return '/' . \FppBundlesModule::ENTITY_URL . "/$action";
+  }
+
+  /**
+   * Programmatically creating the bundle in database.
+   *
+   * @throws \FppBundlesException
+   *
+   * @return array
+   *   Information about bundle that has been created.
+   */
+  public function createBundleProgrammatically() {
+    $module = fpp_bundles();
+    $human_name = $this->randomName(14);
+    $category_name = $this->randomName(8);
+
+    $bundle = array(
+      'name' => $human_name,
+      'level' => 0,
+      'machine' => $module->createMachineName($human_name),
+      'category' => $category_name,
+    );
+
+    $bundle['bid'] = $module->createBundle($module->prepareBundleData($bundle));
+
+    return $bundle;
+  }
+
+  /**
+   * Get the necessary data for creating the bundle.
+   *
+   * @return array
+   *   Information.
+   */
+  public function getRandomBundleData() {
+    $edit = array();
+    $edit['name'] = $this->randomName(14);
+    $edit['level'] = 0;
+    $edit['category'] = $this->randomName(8);
+
+    return $edit;
+  }
+}

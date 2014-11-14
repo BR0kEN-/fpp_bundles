@@ -1,0 +1,424 @@
+<?php
+/**
+ * @file
+ * Module for creation panels from admin interface.
+ *
+ * @author Sergey Bondarenko <broken@propeople.com.ua>
+ */
+
+/**
+ * Main controller of the module.
+ *
+ * @return \FppBundlesModule
+ *   Module object instance.
+ */
+function fpp_bundles() {
+  return \FppBundlesModule::instance(__DIR__);
+}
+
+/**
+ * Get the information about entity of the "fieldable_panels_pane" type.
+ *
+ * @return \stdClass
+ *   Entity information.
+ */
+function get_fieldable_panels_pane_entity() {
+  return (object) entity_get_info(\FppBundlesModule::ENTITY_TYPE);
+}
+
+// =============================================================================
+// Drupal hooks.
+
+/**
+ * Create the module route.
+ *
+ * @return array
+ *   An array of menu routes.
+ */
+function fpp_bundles_menu() {
+  return fpp_bundles()->getMenuRoutes();
+}
+
+/**
+ * Implements hook_features_api().
+ */
+function fpp_bundles_features_api() {
+  $module = fpp_bundles();
+  $module_name = $module->getModuleName();
+  $integrations = array();
+
+  $integrations[$module_name] = array(
+    'name' => t('Fieldable Panels Panes Bundles'),
+    'file' => $module->getModulePath() . "/includes/$module_name.features.inc",
+    'default_hook' => $module_name,
+    'default_file' => FEATURES_DEFAULTS_INCLUDED,
+    'feature_source' => TRUE,
+  );
+
+  return $integrations;
+}
+
+/**
+ * Implements hook_entity_info_alter().
+ */
+function fpp_bundles_entity_info_alter(&$entity_info) {
+  $module = fpp_bundles();
+  $manage_url = $module->getEntityManageUrl();
+
+  /* @var \FppBundle $bundle */
+  foreach ($module->getAllBundles() as $machine_name => $bundle) {
+    $entity_info[\FppBundlesModule::ENTITY_TYPE]['bundles'][$machine_name] = array(
+      'bid' => $bundle->getBundleId(),
+      'label' => $bundle->getHumanName(),
+      'pane category' => $bundle->getCategoryName() ?: t('Custom'),
+      'pane top level' => $bundle->isTopLevelPanel(),
+      'admin' => array(
+        'path' => "$manage_url/%fieldable_panels_panes_type",
+        'real path' => "$manage_url/$machine_name",
+        'bundle argument' => 4,
+        'access arguments' => array(\FppBundlesModule::ENTITY_ACCESS),
+      ),
+    );
+  }
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function fpp_bundles_menu_alter(&$items) {
+  $item =& $items[\FppBundlesModule::ENTITY_URL];
+
+  // Set original callback to page arguments and replace it to custom.
+  $item['page callback'] = '_' . fpp_bundles()->getModuleName() . '_entities_page';
+}
+
+// =============================================================================
+// Callbacks.
+
+/**
+ * Form for add/edit the FPP bundle.
+ *
+ * @see \FppBundlesModule::__construct()
+ *
+ * @param string $action
+ *   An action that performed
+ *
+ * @param int $bid
+ *   The bundle ID.
+ *
+ * @return array
+ *   An array of form items.
+ */
+function _fpp_bundles_manage_bundle($action, $bid = 0) {
+  $page_title = drupal_set_title(ucfirst($action) . ' bundle');
+
+  // If we have "bid" (bundle id), then action can be only a "edit" or "delete".
+  if ($bid) {
+    $bundle = fpp_bundles()->getBundleByDbIndex('primary', $bid);
+
+    // Go to entities list if bundle has not stored in DB.
+    if (!$bundle) {
+      drupal_goto(\FppBundlesModule::ENTITY_URL);
+    }
+  }
+  else {
+    $bundle = new \FppBundle();
+  }
+
+  return drupal_get_form(__FUNCTION__ . '_form', $bundle, $action, $page_title);
+}
+
+/**
+ * Callback function for check bundles categories.
+ *
+ * @param string $string
+ *   User input.
+ */
+function _fpp_bundles_autocomplete_category($string) {
+  $matches = array();
+  $result = fpp_bundles()
+    ->prepareBundles()
+    ->condition('category', "%$string%", 'like')
+    ->range(0, 15)
+    ->execute();
+
+  foreach ($result as $row) {
+    $matches[$row->category] = $row->category;
+  }
+
+  drupal_json_output($matches);
+}
+
+/**
+ * Settings form for the bundles actions.
+ *
+ * @see _fpp_bundles_manage_bundle()
+ *
+ * @param array $form
+ *   Form items and configuration.
+ *
+ * @param array $form_state
+ *   Information about current state of the form.
+ *
+ * @param \FppBundle $bundle
+ *   Bundle object.
+ *
+ * @param string $action
+ *   Performing action.
+ *
+ * @param string $page_title
+ *   Human readable page name.
+ *
+ * @return array
+ *   Drupal form.
+ */
+function _fpp_bundles_manage_bundle_form(array $form, array &$form_state, \FppBundle $bundle, $action, $page_title) {
+  $bundle_name = $bundle->getHumanName();
+  $menu_paths = fpp_bundles()->getMenuPaths();
+  $items = array();
+
+  // Create hidden fields.
+  foreach (array(
+    'bid' => $bundle->getBundleId(),
+    'action' => $action,
+    'machine' => $bundle->getMachineName(),
+  ) as $name => $value) {
+    $items[$name] = array(
+      '#type' => 'hidden',
+      '#default_value' => $value,
+    );
+  }
+
+  $items['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Name of the bundle'),
+    '#required' => TRUE,
+    '#default_value' => $bundle_name,
+  );
+
+  $items['category'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Bundle category'),
+    '#default_value' => $bundle->getCategoryName(),
+    '#autocomplete_path' => $menu_paths['autocomplete category'],
+  );
+
+  $items['level'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('An entity will be shown in the general list.'),
+    '#description' => '',
+    '#default_value' => $bundle->isTopLevelPanel(),
+  );
+
+  $form['actions'] = array(
+    '#type' => 'actions',
+  );
+
+  $form['actions']['save'] = array(
+    '#type' => 'submit',
+    '#value' => $page_title,
+    '#validate' => array(
+      __FUNCTION__ . '_validate',
+    ),
+  );
+
+  if ($action == 'remove') {
+    $items = array_map('hide', $items);
+    $form['warning'] = array(
+      '#markup' => t('Do you really want to remove the "!name" FPP bundle? This action can not to be undone!', array(
+        '!name' => "<b>$bundle_name</b>",
+      )),
+    );
+  }
+
+  return $items + $form;
+}
+
+/**
+ * Validation handler for _fpp_bundles_manage_bundle_form().
+ */
+function _fpp_bundles_manage_bundle_form_validate(array $form, array &$form_state) {
+  $module = fpp_bundles();
+  $values =& $form_state['values'];
+
+  if ($values['action'] == 'create') {
+    $values['machine'] = $module->createMachineName($values['name']);
+
+    if (isset(get_fieldable_panels_pane_entity()->bundles[$values['machine']])) {
+      form_set_error('name', t('The bundle with such name is already exists!'));
+    }
+
+    unset($values['bid']);
+  }
+
+  try {
+    $form_state['bundle'] = $module->prepareBundleData($values);
+  }
+  catch (\FppBundlesException $e) {
+    form_set_error($e->getMessage());
+  }
+}
+
+/**
+ * Submit handler for _fpp_bundles_manage_bundle_form().
+ */
+function _fpp_bundles_manage_bundle_form_submit(array $form, array &$form_state) {
+  $values = $form_state['values'];
+
+  // @todo Remove all fields of the bundle together with it.
+  fpp_bundles()->{$values['action'] . 'Bundle'}($form_state['bundle']);
+
+  \FppBundlesModule::clearCaches();
+
+  drupal_set_message(t('Operation over the "!bundle" bundle has been successfully completed.', array(
+    '!bundle' => $values['name'],
+  )));
+
+  $form_state['redirect'] = \FppBundlesModule::ENTITY_URL;
+}
+
+/**
+ * Callback function for the FPP Entities page.
+ *
+ * @return array
+ *   An array with elements for render.
+ */
+function _fpp_bundles_entities_page() {
+  $items = $rows = array();
+
+  $module = fpp_bundles();
+  $menu_paths = $module->getMenuPaths();
+  $manage_url = $module->getEntityManageUrl();
+
+  /* @var \FppBundle $bundle */
+  foreach ($module->getAllBundles(10) as $machine_name => $bundle) {
+    $manage_entity_url = "$manage_url/$machine_name";
+    $actions = array();
+
+    $actions['entity'] = _fpp_bundles_build_links_for_operations_with_bundle($manage_entity_url);
+
+    foreach (array(
+      'update' => t('update'),
+      'remove' => t('remove'),
+    ) as $action_type => $action_name) {
+      $actions['bundle'][$action_type] = array(
+        'title' => $action_name,
+        'href' => $menu_paths[$action_type] . '/' . $bundle->getBundleId(),
+      );
+    }
+
+    foreach (array('entity', 'bundle') as $action_type) {
+      $actions[$action_type] = _fpp_bundles_theme_links_block($actions[$action_type]);
+    }
+
+    $rows[] = array(
+      'name' => l($bundle->getHumanName(), $manage_entity_url),
+      'category' => $bundle->getCategoryName(),
+    ) + $actions;
+  }
+
+  $items['bundles'] = array(
+    '#theme' => 'table',
+    '#header' => array(
+      'name' => t('Name'),
+      'category' => t('Category'),
+      'entity' => t('Entity actions'),
+      'bundle' => t('Bundle actions'),
+    ),
+    '#rows' => $rows,
+    '#empty' => t('Any bundle has not been created.'),
+  );
+
+  $items['pager'] = array(
+    '#theme' => 'pager',
+  );
+
+  $items['separator'] = array(
+    '#tag' => 'h4',
+    '#type' => 'html_tag',
+    '#value' => t('Bundles, that has been created programmatically.'),
+    '#attributes' => array(
+      'class' => 'form-item',
+    ),
+  );
+
+  $items[] = _fpp_bundles_get_bundles_stored_in_code();
+
+  return $items;
+}
+
+/**
+ * Get an array with links for entity managing.
+ *
+ * @param string $url_prefix
+ *   Admin URL to bundle page. Will be suffixed by action type.
+ *
+ * @return array
+ *   An associative array where key is a machine name of link and
+ *   value - an array with two keys: "title" and "href".
+ */
+function _fpp_bundles_build_links_for_operations_with_bundle($url_prefix) {
+  $actions = array();
+
+  foreach (array(
+    'add' => t('add panel'),
+    'fields' => t('manage fields'),
+    'display' => t('manage display'),
+  ) as $action_type => $action_name) {
+    $actions[$action_type] = array(
+      'title' => $action_name,
+      'href' => "$url_prefix/$action_type",
+    );
+  }
+
+  return $actions;
+}
+
+/**
+ * Wrapper for Drupal "theme()" function.
+ *
+ * @param array $links
+ *   An array that can be rendered by Drupal mechanism.
+ *
+ * @throws /Exception
+ *
+ * @return string
+ *   HTML markup.
+ */
+function _fpp_bundles_theme_links_block(array $links) {
+  return theme('links', array(
+    'links' => $links,
+    'attributes' => array(
+      'class' => array('links', 'inline'),
+    ),
+  ));
+}
+
+/**
+ * Get an array with bundles for render which has been created programmatically.
+ */
+function _fpp_bundles_get_bundles_stored_in_code() {
+  $rows = array();
+
+  foreach (get_fieldable_panels_pane_entity()->bundles as $machine_name => $bundle) {
+    // If the bundle does not have the "bid" it means that it has
+    // been created programmatically.
+    if (!isset($bundle['bid'])) {
+      $rows[] = array(
+        'name' => l($bundle['label'], $bundle['admin']['real path']),
+        'category' => isset($bundle['pane category']) ? $bundle['pane category'] : '',
+        'operations' => _fpp_bundles_theme_links_block(_fpp_bundles_build_links_for_operations_with_bundle($bundle['admin']['real path'])),
+      );
+    }
+  }
+
+  return array(
+    '#theme' => 'table',
+    '#header' => array(
+      'name' => t('Name'),
+      'category' => t('Category'),
+      'operations' => t('Operations'),
+    ),
+    '#rows' => $rows,
+  );
+}

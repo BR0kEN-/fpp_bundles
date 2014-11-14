@@ -1,0 +1,15 @@
+name = Fieldable Panels Panes Bundles
+description = Create your own "Fieldable Panels Pane" entity from admin interface, add fields on it and export it all with "Features".
+testing_api = 2.x
+package = Panels
+core = 7.x
+
+files[] = fpp_bundles.test
+files[] = classes/FppBundle.inc
+files[] = classes/FppBundlesModule.inc
+files[] = classes/FppBundlesDatabase.inc
+files[] = classes/FppBundlesException.inc
+
+configure = admin/structure/fieldable-panels-panes
+
+dependencies[] = fieldable_panels_panes
