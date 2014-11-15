@@ -6,6 +6,8 @@
  * @author Sergey Bondarenko <broken@propeople.com.ua>
  */
 
+define('FPP_BUNDLES_MINIMUM_CHARS_FOR_NAME', 5);
+
 /**
  * Main controller of the module.
  *
@@ -240,6 +242,19 @@ function _fpp_bundles_manage_bundle_form(array $form, array &$form_state, \FppBu
 function _fpp_bundles_manage_bundle_form_validate(array $form, array &$form_state) {
   $module = fpp_bundles();
   $values =& $form_state['values'];
+  $values['name'] = $module->createName($values['name']);
+
+  if (empty($values['name'])) {
+    form_set_error('name', t('The name of bundle should not be empty and can contain only latin letters.'));
+  }
+  elseif (!strlen(preg_replace('/\d+|\s+/', '', $values['name']))) {
+    form_set_error('name', t('The name of bundle should not contain only numbers.'));
+  }
+  elseif (strlen($values['name']) < FPP_BUNDLES_MINIMUM_CHARS_FOR_NAME) {
+    form_set_error('name', t('The name of bundle should contain more than !number symbols.', array(
+      '!number' => FPP_BUNDLES_MINIMUM_CHARS_FOR_NAME,
+    )));
+  }
 
   if ($values['action'] == 'create') {
     $values['machine'] = $module->createMachineName($values['name']);
@@ -255,7 +270,7 @@ function _fpp_bundles_manage_bundle_form_validate(array $form, array &$form_stat
     $form_state['bundle'] = $module->prepareBundleData($values);
   }
   catch (\FppBundlesException $e) {
-    form_set_error($e->getMessage());
+    form_set_error('name', $e->getMessage());
   }
 }
 

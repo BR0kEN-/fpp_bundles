@@ -55,6 +55,45 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
   }
 
   /**
+   * Test case, when the name consists only from cyrillic letters.
+   */
+  public function testCreateBundleWithCyrillicSymbols() {
+    $edit = $this->getRandomBundleData();
+    $edit['name'] = '  Тестовый бандл';
+
+    $message = t('The name of bundle should not be empty and can contain only latin letters.');
+
+    $this->drupalPost($this->getActionUrl('create'), $edit, t('Create bundle'));
+    $this->assertText($message, $message);
+  }
+
+  /**
+   * Test case, when the name consists only from numbers.
+   */
+  public function testCreateBundleWithNumbers() {
+    $edit = $this->getRandomBundleData();
+    $edit['name'] = ' 22 1212 3432';
+
+    $message = t('The name of bundle should not contain only numbers.');
+
+    $this->drupalPost($this->getActionUrl('create'), $edit, t('Create bundle'));
+    $this->assertText($message, $message);
+  }
+
+  /**
+   * Test case, when the name consists less than five symbols.
+   */
+  public function testCreateBundleWithNameLessThanFiveSymbols() {
+    $edit = $this->getRandomBundleData();
+    $edit['name'] = ' Bund _!#$%^&_+=-ÆæØ';
+
+    $message = t('The name of bundle should contain more than 5 symbols.');
+
+    $this->drupalPost($this->getActionUrl('create'), $edit, t('Create bundle'));
+    $this->assertText($message, $message);
+  }
+
+  /**
    * Editing an existing bundle.
    */
   public function testUpdateBundle() {
@@ -143,7 +182,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    */
   public function getRandomBundleData() {
     $edit = array();
-    $edit['name'] = $this->randomName(14);
+    $edit['name'] = fpp_bundles()->createName("__-_ An awe-some manager!#$%^&_+123=-ÆæØøäÄö'Ö\"@ (bundle)");
     $edit['level'] = 0;
     $edit['category'] = $this->randomName(8);
 

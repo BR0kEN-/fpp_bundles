@@ -157,6 +157,19 @@ final class FppBundlesModule extends \FppBundlesDatabase {
   }
 
   /**
+   * Transform any string to human readable name.
+   *
+   * @param string $string
+   *   Input string for transformations.
+   *
+   * @return string
+   *   Generated name.
+   */
+  public static function createName($string) {
+    return trim(preg_replace('/\s+/', ' ', preg_replace('/[^\w+]|\+|_/i', ' ', $string)));
+  }
+
+  /**
    * Transform a any string to machine name.
    *
    * @example
@@ -167,9 +180,9 @@ final class FppBundlesModule extends \FppBundlesDatabase {
    *   Input string for transformations.
    *
    * @return string
-   *   Generated machine name with numbers, lowercase letters and underscores.
+   *   Generated name.
    */
-  public function createMachineName($string) {
+  public static function createMachineName($string) {
     // Firstly, set to lowercase the input string. Secondly, leave in a
     // row only lowercase latin characters, numbers, and single spaces,
     // but only between the words. Thirdly, replace spaces to underscores.
