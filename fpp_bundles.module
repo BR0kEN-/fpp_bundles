@@ -1,11 +1,14 @@
 <?php
 /**
  * @file
- * Module for creation panels from admin interface.
+ * Module for creating panels from admin interface.
  *
  * @author Sergey Bondarenko <broken@propeople.com.ua>
  */
 
+/**
+ * Minimum characters number for name of the bundle.
+ */
 define('FPP_BUNDLES_MINIMUM_CHARS_FOR_NAME', 5);
 
 /**
@@ -28,7 +31,6 @@ function get_fieldable_panels_pane_entity() {
   return (object) entity_get_info(\FppBundlesModule::ENTITY_TYPE);
 }
 
-// =============================================================================
 // Drupal hooks.
 
 /**
@@ -94,8 +96,7 @@ function fpp_bundles_menu_alter(&$items) {
   $item['page callback'] = '_' . fpp_bundles()->getModuleName() . '_entities_page';
 }
 
-// =============================================================================
-// Callbacks.
+// Callbacks and helpers.
 
 /**
  * Form for add/edit the FPP bundle.
@@ -103,7 +104,7 @@ function fpp_bundles_menu_alter(&$items) {
  * @see \FppBundlesModule::__construct()
  *
  * @param string $action
- *   An action that performed
+ *   An action that been performed.
  *
  * @param int $bid
  *   The bundle ID.
@@ -112,11 +113,11 @@ function fpp_bundles_menu_alter(&$items) {
  *   An array of form items.
  */
 function _fpp_bundles_manage_bundle($action, $bid = 0) {
-  $page_title = drupal_set_title(ucfirst($action) . ' bundle');
+  $module = fpp_bundles();
 
-  // If we have "bid" (bundle id), then action can be only a "edit" or "delete".
+  // If we have "bid" (bundle id), then action can be only "edit" or "delete".
   if ($bid) {
-    $bundle = fpp_bundles()->getBundleByDbIndex('primary', $bid);
+    $bundle = $module->getBundleByDbIndex('primary', $bid);
 
     // Go to entities list if bundle has not stored in DB.
     if (!$bundle) {
@@ -127,7 +128,7 @@ function _fpp_bundles_manage_bundle($action, $bid = 0) {
     $bundle = new \FppBundle();
   }
 
-  return drupal_get_form(__FUNCTION__ . '_form', $bundle, $action, $page_title);
+  return drupal_get_form(__FUNCTION__ . '_form', $bundle, $action, drupal_set_title($module->getActionTitle($action)));
 }
 
 /**

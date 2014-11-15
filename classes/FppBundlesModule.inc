@@ -33,13 +33,19 @@ final class FppBundlesModule extends \FppBundlesDatabase {
 
   /**
    * @var array
-   *   An associative array where key - is name of the path and a value - URL.
+   *   An associative array where key is name of the action and a value - URL.
    */
   protected $menuPaths = array();
 
   /**
    * @var array
-   *   An associative that implements the Drupal menu routing item.
+   *   An associative array where key is name of the action and a value - title.
+   */
+  protected $actionTitles = array();
+
+  /**
+   * @var array
+   *   An associative array that contains the Drupal menu routing items.
    */
   protected $menuRoutes = array();
 
@@ -65,11 +71,11 @@ final class FppBundlesModule extends \FppBundlesDatabase {
         'title' => t('Remove the bundle'),
       ),
       'update' => array(
-        'title' => t('Edit the bundle'),
+        'title' => t('Update the bundle'),
       ),
       'create' => array(
         'type' => MENU_LOCAL_ACTION,
-        'title' => t('Create new bundle'),
+        'title' => t('Create the bundle'),
       ),
     ) as $human_name => $data) {
       $relative_path = str_replace(' ', '/', $human_name);
@@ -101,6 +107,10 @@ final class FppBundlesModule extends \FppBundlesDatabase {
       );
 
       $this->menuPaths[$human_name] = $route_path;
+
+      if (isset($data['title'])) {
+        $this->actionTitles[$human_name] = $data['title'];
+      }
     }
   }
 
@@ -130,6 +140,26 @@ final class FppBundlesModule extends \FppBundlesDatabase {
    */
   public function getMenuRoutes() {
     return $this->menuRoutes;
+  }
+
+  /**
+   * Property getter.
+   */
+  public function getActionTitles() {
+    return $this->actionTitles;
+  }
+
+  /**
+   * Get the page title for an action.
+   *
+   * @param string $action
+   *   Action name.
+   *
+   * @return string
+   *   Title for the specified action.
+   */
+  public function getActionTitle($action) {
+    return isset($this->actionTitles[$action]) ? $this->actionTitles[$action] : '';
   }
 
   /**
