@@ -41,8 +41,9 @@ final class FppBundlesModule extends \FppBundlesDatabase {
   protected $menuPaths = array();
 
   /**
+   * An associative array where key is name of the action and a value - title.
+   *
    * @var array
-   *   An associative array where key is name of the action and a value - title.
    */
   protected $actionTitles = array();
 
@@ -206,12 +207,12 @@ final class FppBundlesModule extends \FppBundlesDatabase {
   /**
    * Transform a any string to machine name.
    *
-   * @example
-   *   Input: "__-_   An awe-some manager!#$%^&_+123=-ÆæØøäÄö'Ö\"@ (bundle)"
-   *   Output: "an_awe_some_manager123_bundle"
-   *
    * @param string $string
    *   Input string for transformations.
+   *
+   * @example
+   *   String: "__-_   An awe-some manager!#$%^&_+123=-ÆæØä'Ö\"@ (bundle)"
+   *   Will be transformed to: "an_awe_some_manager123_bundle".
    *
    * @return string
    *   Generated name.

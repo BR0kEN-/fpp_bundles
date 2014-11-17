@@ -97,12 +97,12 @@ function fpp_bundles_menu_alter(&$items) {
 /**
  * Form for add/edit the FPP bundle.
  *
- * @see \FppBundlesModule::__construct()
- *
  * @param string $action
  *   An action that been performed.
  * @param int $bid
  *   The bundle ID.
+ *
+ * @see \FppBundlesModule::__construct()
  *
  * @return array
  *   An array of form items.
@@ -150,8 +150,6 @@ function _fpp_bundles_autocomplete_category($string) {
 /**
  * Settings form for the bundles actions.
  *
- * @see _fpp_bundles_manage_bundle()
- *
  * @param array $form
  *   Form items and configuration.
  * @param array $form_state
@@ -162,6 +160,8 @@ function _fpp_bundles_autocomplete_category($string) {
  *   Performing action.
  * @param string $page_title
  *   Human readable page name.
+ *
+ * @see _fpp_bundles_manage_bundle()
  *
  * @return array
  *   Drupal form.
