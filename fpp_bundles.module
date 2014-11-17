@@ -234,7 +234,10 @@ function _fpp_bundles_manage_bundle_form(array $form, array &$form_state, \FppBu
 function _fpp_bundles_manage_bundle_form_validate(array $form, array &$form_state) {
   $module = fpp_bundles();
   $values =& $form_state['values'];
-  $values['name'] = $module->createName($values['name']);
+
+  foreach (array('name', 'category') as $field) {
+    $values[$field] = $module->createName($values[$field]);
+  }
 
   if (empty($values['name'])) {
     form_set_error('name', t('The name of bundle should not be empty and can contain only latin letters.'));
