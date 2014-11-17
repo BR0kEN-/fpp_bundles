@@ -5,7 +5,7 @@
  */
 
 /**
- * Class FppBundlesException
+ * Class FppBundlesException.
  */
 class FppBundlesException extends \Exception {
   /**
@@ -13,7 +13,6 @@ class FppBundlesException extends \Exception {
    *
    * @param string $message
    *   Text message with placeholders.
-   *
    * @param array $args
    *   An array of arguments for replacing the placeholders.
    *

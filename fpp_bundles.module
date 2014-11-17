@@ -101,7 +101,6 @@ function fpp_bundles_menu_alter(&$items) {
  *
  * @param string $action
  *   An action that been performed.
- *
  * @param int $bid
  *   The bundle ID.
  *
@@ -155,16 +154,12 @@ function _fpp_bundles_autocomplete_category($string) {
  *
  * @param array $form
  *   Form items and configuration.
- *
  * @param array $form_state
  *   Information about current state of the form.
- *
  * @param \FppBundle $bundle
  *   Bundle object.
- *
  * @param string $action
  *   Performing action.
- *
  * @param string $page_title
  *   Human readable page name.
  *
@@ -391,8 +386,6 @@ function _fpp_bundles_build_links_for_operations_with_bundle($url_prefix) {
  *
  * @param array $links
  *   An array that can be rendered by Drupal mechanism.
- *
- * @throws /Exception
  *
  * @return string
  *   HTML markup.

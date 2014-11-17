@@ -5,26 +5,29 @@
  */
 
 /**
- * Class FppBundlesDatabase
+ * Class FppBundlesDatabase.
  */
 class FppBundlesDatabase {
   const BUNDLE_CLASS_NAME = '\FppBundle';
 
   /**
+   * Database schema for Drupal "hook_schema" usage.
+   *
    * @var array
-   *   Database schema for Drupal "hook_schema" usage.
    */
-  protected $schema;
+  protected $schema = array();
 
   /**
+   * Table fields names, exclude indexes.
+   *
    * @var array
-   *   Table fields names, exclude indexes.
    */
-  protected $fields;
+  protected $fields = array();
 
   /**
+   * An array where key is name the index and value - field with index.
+   *
    * @var array
-   *   An array where key is name the index and value - field with index.
    */
   protected $indexes = array(
     'primary' => '',
@@ -32,16 +35,18 @@ class FppBundlesDatabase {
   );
 
   /**
+   * An array with all bundles created from admin interface.
+   *
    * @var array
-   *   An array with all bundles created from admin interface.
    */
-  private $allBundles;
+  private $allBundles = array();
 
   /**
+   * DB table name.
+   *
    * @var string
-   *   DB table name.
    */
-  private $table;
+  private $table = '';
 
   /**
    * Create instance to work with DB table.
@@ -115,7 +120,6 @@ class FppBundlesDatabase {
    *
    * @param string $index_name
    *   An index name. Must be "primary" or "unique".
-   *
    * @param int|string $value
    *   An ID of the bundle.
    *
@@ -262,6 +266,7 @@ class FppBundlesDatabase {
    *   Required keys are: "name", "level", "machine", "category".
    *
    * @throws \FppBundlesException
+   *   If property is absent but should be.
    *
    * @return array
    *   Bundle information.

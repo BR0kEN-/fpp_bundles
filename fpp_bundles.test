@@ -5,7 +5,7 @@
  */
 
 /**
- * Class FppBundlesTestCase
+ * Class FppBundlesTestCase.
  */
 class FppBundlesTestCase extends \DrupalWebTestCase {
   /**
@@ -49,8 +49,6 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
   /**
    * Programmatically creating the bundle in database.
    *
-   * @throws \FppBundlesException
-   *
    * @return array
    *   Information about bundle that has been created.
    */
@@ -66,7 +64,14 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
       'category' => $category_name,
     );
 
-    $bundle['bid'] = $module->createBundle($module->prepareBundleData($bundle));
+    try {
+      $bundle['bid'] = $module->createBundle($module->prepareBundleData($bundle));
+    }
+    catch (\FppBundlesException $e) {
+      $this->error($e->getMessage());
+
+      return FALSE;
+    }
 
     return $bundle;
   }

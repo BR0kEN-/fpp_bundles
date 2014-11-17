@@ -5,7 +5,7 @@
  */
 
 /**
- * Class FppBundlesModule
+ * Class FppBundlesModule.
  */
 final class FppBundlesModule extends \FppBundlesDatabase {
   const ENTITY_URL = 'admin/structure/fieldable-panels-panes';
@@ -13,27 +13,30 @@ final class FppBundlesModule extends \FppBundlesDatabase {
   const ENTITY_ACCESS = 'administer fieldable panels panes';
 
   /**
+   * Instance of object for provide "singleton" pattern.
+   *
    * @var self
-   *   Instance of object for provide "singleton" pattern.
    */
   private static $instance;
 
   /**
+   * The variable is needed for use it as prefix for different targets.
+   *
    * @var string
-   *   The variable is needed for use it as prefix for
-   *   different targets and acts as database table name.
    */
   protected $moduleName;
 
   /**
+   * Relative path to module from Drupal installation directory.
+   *
    * @var string
-   *   Relative path to module from Drupal installation directory.
    */
   protected $modulePath;
 
   /**
+   * An associative array where key is name of the action and a value - URL.
+   *
    * @var array
-   *   An associative array where key is name of the action and a value - URL.
    */
   protected $menuPaths = array();
 
@@ -44,8 +47,9 @@ final class FppBundlesModule extends \FppBundlesDatabase {
   protected $actionTitles = array();
 
   /**
+   * An associative array that contains the Drupal menu routing items.
+   *
    * @var array
-   *   An associative array that contains the Drupal menu routing items.
    */
   protected $menuRoutes = array();
 

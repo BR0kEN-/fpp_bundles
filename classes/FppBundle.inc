@@ -5,36 +5,41 @@
  */
 
 /**
- * Class FppBundle
+ * Class FppBundle.
  */
 class FppBundle {
   /**
+   * The bundle ID.
+   *
    * @var int
-   *   The bundle ID.
    */
   private $bid = 0;
 
   /**
+   * The human name of bundle.
+   *
    * @var string
-   *   The human name of bundle.
    */
   private $name = '';
 
   /**
+   * Indicates that the panel should be placed in top level or not.
+   *
    * @var bool
-   *   Indicates that the panel should be placed in top level or not.
    */
   private $level = FALSE;
 
   /**
+   * An unique bundle machine name.
+   *
    * @var string
-   *   An unique bundle machine name.
    */
   private $machine = '';
 
   /**
+   * Category where was placed the bundle.
+   *
    * @var string
-   *   Category where was placed the bundle.
    */
   private $category = '';
 
