@@ -33,8 +33,58 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
     $this->drupalLogin($this->drupalCreateUser(array(\FppBundlesModule::ENTITY_ACCESS)));
   }
 
-  // ===========================================================================
-  // Testing methods.
+  /**
+   * Build an URL to page on that can be performed some action.
+   *
+   * @param string $action
+   *   URL suffix.
+   *
+   * @return string
+   *   Page URL.
+   */
+  public function getActionUrl($action) {
+    return '/' . \FppBundlesModule::ENTITY_URL . "/$action";
+  }
+
+  /**
+   * Programmatically creating the bundle in database.
+   *
+   * @throws \FppBundlesException
+   *
+   * @return array
+   *   Information about bundle that has been created.
+   */
+  public function createBundleProgrammatically() {
+    $module = fpp_bundles();
+    $human_name = $this->randomName(14);
+    $category_name = $this->randomName(8);
+
+    $bundle = array(
+      'name' => $human_name,
+      'level' => 0,
+      'machine' => $module->createMachineName($human_name),
+      'category' => $category_name,
+    );
+
+    $bundle['bid'] = $module->createBundle($module->prepareBundleData($bundle));
+
+    return $bundle;
+  }
+
+  /**
+   * Get the necessary data for creating the bundle.
+   *
+   * @return array
+   *   Information.
+   */
+  public function getRandomBundleData() {
+    $edit = array();
+    $edit['name'] = fpp_bundles()->createName("__-_ An awe-some manager!#$%^&_+123=-ÆæØøäÄö'Ö\"@ (bundle)");
+    $edit['level'] = 0;
+    $edit['category'] = $this->randomName(8);
+
+    return $edit;
+  }
 
   /**
    * Creating a new bundle.
@@ -131,61 +181,5 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
     $this->drupalPost($url, array(), t('Remove bundle'));
     $this->assertResponse(200, 'The bundle was successfully removed.');
     $this->assertNoText($edit['name'], 'Name of the bundle was not found in bundles table.');
-  }
-
-  // ===========================================================================
-  // Custom methods.
-
-  /**
-   * Build an URL to page on that can be performed some action.
-   *
-   * @param string $action
-   *   URL suffix.
-   *
-   * @return string
-   *   Page URL.
-   */
-  public function getActionUrl($action) {
-    return '/' . \FppBundlesModule::ENTITY_URL . "/$action";
-  }
-
-  /**
-   * Programmatically creating the bundle in database.
-   *
-   * @throws \FppBundlesException
-   *
-   * @return array
-   *   Information about bundle that has been created.
-   */
-  public function createBundleProgrammatically() {
-    $module = fpp_bundles();
-    $human_name = $this->randomName(14);
-    $category_name = $this->randomName(8);
-
-    $bundle = array(
-      'name' => $human_name,
-      'level' => 0,
-      'machine' => $module->createMachineName($human_name),
-      'category' => $category_name,
-    );
-
-    $bundle['bid'] = $module->createBundle($module->prepareBundleData($bundle));
-
-    return $bundle;
-  }
-
-  /**
-   * Get the necessary data for creating the bundle.
-   *
-   * @return array
-   *   Information.
-   */
-  public function getRandomBundleData() {
-    $edit = array();
-    $edit['name'] = fpp_bundles()->createName("__-_ An awe-some manager!#$%^&_+123=-ÆæØøäÄö'Ö\"@ (bundle)");
-    $edit['level'] = 0;
-    $edit['category'] = $this->randomName(8);
-
-    return $edit;
   }
 }

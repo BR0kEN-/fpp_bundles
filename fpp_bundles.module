@@ -27,11 +27,9 @@ function fpp_bundles() {
  * @return \stdClass
  *   Entity information.
  */
-function get_fieldable_panels_pane_entity() {
+function fpp_bundles_get_fieldable_panels_pane_entity() {
   return (object) entity_get_info(\FppBundlesModule::ENTITY_TYPE);
 }
-
-// Drupal hooks.
 
 /**
  * Create the module route.
@@ -95,8 +93,6 @@ function fpp_bundles_menu_alter(&$items) {
   // Set original callback to page arguments and replace it to custom.
   $item['page callback'] = '_' . fpp_bundles()->getModuleName() . '_entities_page';
 }
-
-// Callbacks and helpers.
 
 /**
  * Form for add/edit the FPP bundle.
@@ -260,7 +256,7 @@ function _fpp_bundles_manage_bundle_form_validate(array $form, array &$form_stat
   if ($values['action'] == 'create') {
     $values['machine'] = $module->createMachineName($values['name']);
 
-    if (isset(get_fieldable_panels_pane_entity()->bundles[$values['machine']])) {
+    if (isset(fpp_bundles_get_fieldable_panels_pane_entity()->bundles[$values['machine']])) {
       form_set_error('name', t('The bundle with such name is already exists!'));
     }
 
@@ -416,7 +412,7 @@ function _fpp_bundles_theme_links_block(array $links) {
 function _fpp_bundles_get_bundles_stored_in_code() {
   $rows = array();
 
-  foreach (get_fieldable_panels_pane_entity()->bundles as $machine_name => $bundle) {
+  foreach (fpp_bundles_get_fieldable_panels_pane_entity()->bundles as $bundle) {
     // If the bundle does not have the "bid" it means that it has
     // been created programmatically.
     if (!isset($bundle['bid'])) {
