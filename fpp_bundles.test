@@ -95,7 +95,8 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    * Creating a new bundle.
    */
   public function testCreateBundle() {
-    $url = $this->getActionUrl('create');
+    $action = 'create';
+    $url = $this->getActionUrl($action);
 
     // Go to the creating page.
     $this->drupalGet($url);
@@ -104,7 +105,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
 
     // Create new bundle.
     $edit = $this->getRandomBundleData();
-    $this->drupalPost($this->getActionUrl('create'), $edit, t('Create bundle'));
+    $this->drupalPost($url, $edit, fpp_bundles()->getActionTitle($action));
     $this->assertResponse(200, 'The bundle was successfully created.');
     $this->assertText($edit['name'], 'Found the name of created bundle in table.');
   }
@@ -113,12 +114,13 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    * Test case, when the name consists only from cyrillic letters.
    */
   public function testCreateBundleWithCyrillicSymbols() {
+    $action = 'create';
     $edit = $this->getRandomBundleData();
     $edit['name'] = '  Тестовый бандл';
 
     $message = t('The name of bundle should not be empty and can contain only latin letters.');
 
-    $this->drupalPost($this->getActionUrl('create'), $edit, t('Create bundle'));
+    $this->drupalPost($this->getActionUrl($action), $edit, fpp_bundles()->getActionTitle($action));
     $this->assertText($message, $message);
   }
 
@@ -126,12 +128,13 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    * Test case, when the name consists only from numbers.
    */
   public function testCreateBundleWithNumbers() {
+    $action = 'create';
     $edit = $this->getRandomBundleData();
     $edit['name'] = ' 22 1212 3432';
 
     $message = t('The name of bundle should not contain only numbers.');
 
-    $this->drupalPost($this->getActionUrl('create'), $edit, t('Create bundle'));
+    $this->drupalPost($this->getActionUrl($action), $edit, fpp_bundles()->getActionTitle($action));
     $this->assertText($message, $message);
   }
 
@@ -139,12 +142,13 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    * Test case, when the name consists less than five symbols.
    */
   public function testCreateBundleWithNameLessThanFiveSymbols() {
+    $action = 'create';
     $edit = $this->getRandomBundleData();
     $edit['name'] = ' Bund _!#$%^&_+=-ÆæØ';
 
     $message = t('The name of bundle should contain more than 5 symbols.');
 
-    $this->drupalPost($this->getActionUrl('create'), $edit, t('Create bundle'));
+    $this->drupalPost($this->getActionUrl($action), $edit, fpp_bundles()->getActionTitle($action));
     $this->assertText($message, $message);
   }
 
@@ -153,8 +157,9 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    */
   public function testUpdateBundle() {
     // Create the bundle.
+    $action = 'update';
     $bundle = $this->createBundleProgrammatically();
-    $url = $this->getActionUrl('update/' . $bundle['bid']);
+    $url = $this->getActionUrl($action . '/' . $bundle['bid']);
 
     // Go to the editing page.
     $this->drupalGet($url);
@@ -163,7 +168,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
 
     // Update data.
     $edit = $this->getRandomBundleData();
-    $this->drupalPost($url, $edit, t('Update bundle'));
+    $this->drupalPost($url, $edit, fpp_bundles()->getActionTitle($action));
     $this->assertResponse(200, 'The bundle was successfully updated.');
     $this->assertText($edit['name'], 'Found the name of updated bundle in table.');
   }
@@ -173,8 +178,9 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    */
   public function testRemoveBundle() {
     // Create the bundle.
+    $action = 'remove';
     $bundle = $this->createBundleProgrammatically();
-    $url = $this->getActionUrl('remove/' . $bundle['bid']);
+    $url = $this->getActionUrl($action . '/' . $bundle['bid']);
 
     // Go to the removing page.
     $this->drupalGet($url);
@@ -183,7 +189,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
 
     // Remove the bundle.
     $edit = $this->getRandomBundleData();
-    $this->drupalPost($url, array(), t('Remove bundle'));
+    $this->drupalPost($url, array(), fpp_bundles()->getActionTitle($action));
     $this->assertResponse(200, 'The bundle was successfully removed.');
     $this->assertNoText($edit['name'], 'Name of the bundle was not found in bundles table.');
   }
