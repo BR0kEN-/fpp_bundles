@@ -11,25 +11,32 @@ class FppBundlesDatabase {
   const BUNDLE_CLASS_NAME = '\FppBundle';
 
   /**
+   * An instance of object.
+   *
+   * @var \FppBundlesDatabase
+   */
+  private static $instance;
+
+  /**
    * Database schema for Drupal "hook_schema" usage.
    *
    * @var array
    */
-  protected $schema = array();
+  private $schema = array();
 
   /**
    * Table fields names, exclude indexes.
    *
    * @var array
    */
-  protected $fields = array();
+  private $fields = array();
 
   /**
    * An array where key is name the index and value - field with index.
    *
    * @var array
    */
-  protected $indexes = array(
+  private $indexes = array(
     'primary' => '',
     'unique' => '',
   );
@@ -54,7 +61,7 @@ class FppBundlesDatabase {
    * @param string $table_name
    *   The name of table in DB.
    */
-  protected function __construct($table_name) {
+  private function __construct($table_name) {
     $this->table = $table_name;
     $not_null_varchar = array(
       'type' => 'varchar',
@@ -202,11 +209,7 @@ class FppBundlesDatabase {
    *   An array with fields machine names.
    */
   public function getAllSchemaFields() {
-    $fields = $this->fields;
-    $fields[] = $this->indexes['unique'];
-    $fields[] = $this->indexes['primary'];
-
-    return $fields;
+    return array_values($this->fields + $this->indexes);
   }
 
   /**
@@ -286,5 +289,21 @@ class FppBundlesDatabase {
     }
 
     return $save;
+  }
+
+  /**
+   * Create/get an instance of object.
+   *
+   * @see self::__construct()
+   *
+   * @return \FppBundlesDatabase
+   *   An object instance.
+   */
+  public static function instance($table_name) {
+    if (!self::$instance) {
+      self::$instance = new self($table_name);
+    }
+
+    return self::$instance;
   }
 }

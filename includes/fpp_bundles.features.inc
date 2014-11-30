@@ -8,11 +8,10 @@
  * Implements hook_features_export_options().
  */
 function fpp_bundles_features_export_options() {
-  $bundles = fpp_bundles()->getAllBundles();
   $options = array();
 
   /* @var \FppBundle $bundle */
-  foreach ($bundles as $machine_name => $bundle) {
+  foreach (fpp_bundles_db()->getAllBundles() as $machine_name => $bundle) {
     $options[$machine_name] = $bundle->getHumanName();
   }
 
@@ -36,11 +35,10 @@ function fpp_bundles_features_export($data, &$export, $feature_name, $module_nam
  * Implements hook_features_export_render().
  */
 function fpp_bundles_features_export_render($feature_name, $data, $export = NULL) {
-  $module = fpp_bundles();
   $code = array();
 
   foreach ($data as $bundle_machine_name) {
-    $bundle = $module->getBundleByName($bundle_machine_name);
+    $bundle = fpp_bundles_db()->getBundleByName($bundle_machine_name);
 
     if ($bundle) {
       $code += $bundle->export();
@@ -48,7 +46,7 @@ function fpp_bundles_features_export_render($feature_name, $data, $export = NULL
   }
 
   return array(
-    $module->getModuleName() => '  return ' . features_var_export($code, '  ') . ';',
+    FPP_BUNDLES_MODULE_MACHINE_NAME => '  return ' . features_var_export($code, '  ') . ';',
   );
 }
 
@@ -56,15 +54,15 @@ function fpp_bundles_features_export_render($feature_name, $data, $export = NULL
  * Implements hook_features_rebuild().
  */
 function fpp_bundles_features_rebuild($feature_name) {
-  $module = fpp_bundles();
+  $db = fpp_bundles_db();
 
-  foreach (module_invoke($feature_name, $module->getModuleName()) as $machine_name => $values) {
-    if (!$module->getBundleByName($machine_name)) {
-      $module->createBundle($values);
+  foreach (module_invoke($feature_name, FPP_BUNDLES_MODULE_MACHINE_NAME) as $machine_name => $values) {
+    if (!$db->getBundleByName($machine_name)) {
+      $db->createBundle($values);
     }
   }
 
-  \FppBundlesModule::clearCaches();
+  _fpp_bundles_clear_caches();
 }
 
 /**

@@ -11,9 +11,9 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
   /**
    * Module object.
    *
-   * @var \FppBundlesModule
+   * @var \FppBundlesDatabase
    */
-  protected $module;
+  protected $db;
 
   /**
    * Give display information to the SimpleTest system.
@@ -35,9 +35,9 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    * Setup the test environment.
    */
   public function setUp() {
-    $this->module = fpp_bundles();
-    parent::setUp($this->module->getModuleName());
-    $this->drupalLogin($this->drupalCreateUser(array(\FppBundlesModule::ENTITY_ACCESS)));
+    $this->db = fpp_bundles_db();
+    parent::setUp(FPP_BUNDLES_MODULE_MACHINE_NAME);
+    $this->drupalLogin($this->drupalCreateUser(array(FPP_BUNDLES_ENTITY_ACCESS)));
   }
 
   /**
@@ -50,7 +50,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    *   Page URL.
    */
   public function getActionUrl($action) {
-    return '/' . \FppBundlesModule::ENTITY_URL . "/$action";
+    return '/' . FPP_BUNDLES_ADMIN_URL . "/$action";
   }
 
   /**
@@ -66,12 +66,12 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
     $bundle = array(
       'name' => $human_name,
       'level' => 0,
-      'machine' => $this->module->createMachineName($human_name),
+      'machine' => _fpp_bundles_create_machine_name($human_name),
       'category' => $category_name,
     );
 
     try {
-      $bundle['bid'] = $this->module->createBundle($this->module->prepareBundleData($bundle));
+      $bundle['bid'] = $this->db->createBundle($this->db->prepareBundleData($bundle));
     }
     catch (\FppBundlesException $e) {
       $this->error($e->getMessage());
@@ -90,7 +90,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    */
   public function getRandomBundleData() {
     $edit = array();
-    $edit['name'] = $this->module->createName("__-_ An awe-some manager!#$%^&_+123=-ÆæØøäÄö'Ö\"@ (bundle)");
+    $edit['name'] = _fpp_bundles_create_name("__-_ An awe-some manager!#$%^&_+123=-ÆæØøäÄö'Ö\"@ (bundle)");
     $edit['level'] = 0;
     $edit['category'] = $this->randomName(8);
 
@@ -111,7 +111,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
 
     // Create new bundle.
     $edit = $this->getRandomBundleData();
-    $this->drupalPost($url, $edit, $this->module->getActionTitle($action));
+    $this->drupalPost($url, $edit, _fpp_bundles_get_action_title($action));
     $this->assertResponse(200, 'The bundle was successfully created.');
     $this->assertText($edit['name'], 'Found the name of created bundle in table.');
   }
@@ -126,7 +126,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
 
     $message = t('The name of bundle should not be empty and can contain only latin letters.');
 
-    $this->drupalPost($this->getActionUrl($action), $edit, $this->module->getActionTitle($action));
+    $this->drupalPost($this->getActionUrl($action), $edit, _fpp_bundles_get_action_title($action));
     $this->assertText($message, $message);
   }
 
@@ -140,7 +140,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
 
     $message = t('The name of bundle should not contain only numbers.');
 
-    $this->drupalPost($this->getActionUrl($action), $edit, $this->module->getActionTitle($action));
+    $this->drupalPost($this->getActionUrl($action), $edit, _fpp_bundles_get_action_title($action));
     $this->assertText($message, $message);
   }
 
@@ -154,7 +154,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
 
     $message = t('The name of bundle should contain more than 5 symbols.');
 
-    $this->drupalPost($this->getActionUrl($action), $edit, $this->module->getActionTitle($action));
+    $this->drupalPost($this->getActionUrl($action), $edit, _fpp_bundles_get_action_title($action));
     $this->assertText($message, $message);
   }
 
@@ -174,7 +174,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
 
     // Update data.
     $edit = $this->getRandomBundleData();
-    $this->drupalPost($url, $edit, $this->module->getActionTitle($action));
+    $this->drupalPost($url, $edit, _fpp_bundles_get_action_title($action));
     $this->assertResponse(200, 'The bundle was successfully updated.');
     $this->assertText($edit['name'], 'Found the name of updated bundle in table.');
   }
@@ -195,7 +195,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
 
     // Remove the bundle.
     $edit = $this->getRandomBundleData();
-    $this->drupalPost($url, array(), $this->module->getActionTitle($action));
+    $this->drupalPost($url, array(), _fpp_bundles_get_action_title($action));
     $this->assertResponse(200, 'The bundle was successfully removed.');
     $this->assertNoText($edit['name'], 'Name of the bundle was not found in bundles table.');
   }

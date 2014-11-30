@@ -7,18 +7,104 @@
  */
 
 /**
+ * Machine name of the module.
+ */
+define('FPP_BUNDLES_MODULE_MACHINE_NAME', 'fpp_bundles');
+/**
+ * An entity machine name.
+ */
+define('FPP_BUNDLES_ENTITY_TYPE', 'fieldable_panels_pane');
+/**
+ * An entity access permissions.
+ */
+define('FPP_BUNDLES_ENTITY_ACCESS', 'administer fieldable panels panes');
+/**
+ * An entity admin page.
+ */
+define('FPP_BUNDLES_ADMIN_URL', 'admin/structure/fieldable-panels-panes');
+/**
  * Minimum characters number for name of the bundle.
  */
 define('FPP_BUNDLES_MINIMUM_CHARS_FOR_NAME', 5);
 
+
 /**
  * Main controller of the module.
  *
- * @return \FppBundlesModule
- *   Module object instance.
+ * @param string $option_name
+ *   Option name, a value of which will be returned.
+ *
+ * @return array
+ *   Module settings or an option value.
  */
-function fpp_bundles() {
-  return \FppBundlesModule::instance(__DIR__);
+function fpp_bundles($option_name = '') {
+  static $settings = array();
+
+  if (!$settings) {
+    foreach (array(
+      'autocomplete category' => array(
+        'type' => MENU_CALLBACK,
+        'page callback' => TRUE,
+        'page arguments' => array(5),
+      ),
+      'remove' => array(
+        'title' => t('Remove the bundle'),
+      ),
+      'update' => array(
+        'title' => t('Update the bundle'),
+      ),
+      'create' => array(
+        'type' => MENU_LOCAL_ACTION,
+        'title' => t('Create the bundle'),
+      ),
+    ) as $human_name => $data) {
+      $relative_path = str_replace(' ', '/', $human_name);
+      // All menu routes of the module relative to the next URL:
+      // "admin/structure/fieldable-panels-panes/list/{module_route}".
+      // That's necessary to be a part of the FPP module and complement it.
+      $route_path = FPP_BUNDLES_ADMIN_URL . '/' . $relative_path;
+      // Prefix for the menu callback function, by default it will be the
+      // next: "_fpp_bundles_".
+      $callback_prefix = '_' . FPP_BUNDLES_MODULE_MACHINE_NAME . '_';
+      // The suffix of the routing callback function by default is a
+      // "manage_bundle". Due to this, default callback function name
+      // is a "_fpp_bundles_manage_bundle".
+      $callback_suffix = 'manage_bundle';
+
+      // If we don't want to use the default route function, then we can
+      // override it, defining the "page callback". Suffix of the callback
+      // function will be generated automatically from relative route path.
+      if (isset($data['page callback'])) {
+        $callback_suffix = _fpp_bundles_create_machine_name($human_name);
+        unset($data['page callback']);
+      }
+
+      $settings['menu_routes'][$route_path] = $data + array(
+        'type' => MENU_VISIBLE_IN_BREADCRUMB,
+        'page callback' => $callback_prefix . $callback_suffix,
+        'page arguments' => array(3),
+        'access arguments' => array(FPP_BUNDLES_ENTITY_ACCESS),
+      );
+
+      $settings['menu_paths'][$human_name] = $route_path;
+
+      if (isset($data['title'])) {
+        $settings['action_titles'][$human_name] = $data['title'];
+      }
+    }
+  }
+
+  return isset($settings[$option_name]) ? $settings[$option_name] : $settings;
+}
+
+/**
+ * Get an object for working with DB.
+ *
+ * @return \FppBundlesDatabase
+ *   An object instance.
+ */
+function fpp_bundles_db() {
+  return \FppBundlesDatabase::instance(FPP_BUNDLES_MODULE_MACHINE_NAME);
 }
 
 /**
@@ -28,7 +114,7 @@ function fpp_bundles() {
  *   Entity information.
  */
 function fpp_bundles_get_fieldable_panels_pane_entity() {
-  return (object) entity_get_info(\FppBundlesModule::ENTITY_TYPE);
+  return (object) entity_get_info(FPP_BUNDLES_ENTITY_TYPE);
 }
 
 /**
@@ -38,21 +124,19 @@ function fpp_bundles_get_fieldable_panels_pane_entity() {
  *   An array of menu routes.
  */
 function fpp_bundles_menu() {
-  return fpp_bundles()->getMenuRoutes();
+  return fpp_bundles('menu_routes');
 }
 
 /**
  * Implements hook_features_api().
  */
 function fpp_bundles_features_api() {
-  $module = fpp_bundles();
-  $module_name = $module->getModuleName();
   $integrations = array();
 
-  $integrations[$module_name] = array(
+  $integrations[FPP_BUNDLES_MODULE_MACHINE_NAME] = array(
     'name' => t('Fieldable Panels Panes Bundles'),
-    'file' => $module->getModulePath() . "/includes/$module_name.features.inc",
-    'default_hook' => $module_name,
+    'file' => drupal_get_path('module', FPP_BUNDLES_MODULE_MACHINE_NAME) . '/includes/' . FPP_BUNDLES_MODULE_MACHINE_NAME . '.features.inc',
+    'default_hook' => FPP_BUNDLES_MODULE_MACHINE_NAME,
     'default_file' => FEATURES_DEFAULTS_INCLUDED,
     'feature_source' => TRUE,
   );
@@ -64,21 +148,18 @@ function fpp_bundles_features_api() {
  * Implements hook_entity_info_alter().
  */
 function fpp_bundles_entity_info_alter(&$entity_info) {
-  $module = fpp_bundles();
-  $manage_url = $module->getEntityManageUrl();
-
   /* @var \FppBundle $bundle */
-  foreach ($module->getAllBundles() as $machine_name => $bundle) {
-    $entity_info[\FppBundlesModule::ENTITY_TYPE]['bundles'][$machine_name] = array(
+  foreach (fpp_bundles_db()->getAllBundles() as $machine_name => $bundle) {
+    $entity_info[FPP_BUNDLES_ENTITY_TYPE]['bundles'][$machine_name] = array(
       'bid' => $bundle->getBundleId(),
       'label' => $bundle->getHumanName(),
       'pane category' => $bundle->getCategoryName() ?: t('Custom'),
       'pane top level' => $bundle->isTopLevelPanel(),
       'admin' => array(
-        'path' => "$manage_url/%fieldable_panels_panes_type",
-        'real path' => "$manage_url/$machine_name",
+        'path' => FPP_BUNDLES_ADMIN_URL . '/manage/%fieldable_panels_panes_type',
+        'real path' => FPP_BUNDLES_ADMIN_URL . "/manage/$machine_name",
         'bundle argument' => 4,
-        'access arguments' => array(\FppBundlesModule::ENTITY_ACCESS),
+        'access arguments' => array(FPP_BUNDLES_ENTITY_ACCESS),
       ),
     );
   }
@@ -88,10 +169,10 @@ function fpp_bundles_entity_info_alter(&$entity_info) {
  * Implements hook_menu_alter().
  */
 function fpp_bundles_menu_alter(&$items) {
-  $item =& $items[\FppBundlesModule::ENTITY_URL];
+  $item =& $items[FPP_BUNDLES_ADMIN_URL];
 
   // Set original callback to page arguments and replace it to custom.
-  $item['page callback'] = '_' . fpp_bundles()->getModuleName() . '_entities_page';
+  $item['page callback'] = '_' . FPP_BUNDLES_MODULE_MACHINE_NAME . '_entities_page';
 }
 
 /**
@@ -102,28 +183,28 @@ function fpp_bundles_menu_alter(&$items) {
  * @param int $bid
  *   The bundle ID.
  *
- * @see \FppBundlesModule::__construct()
+ * @see fpp_bundles()
  *
  * @return array
  *   An array of form items.
  */
-function _fpp_bundles_manage_bundle($action, $bid = 0) {
-  $module = fpp_bundles();
+function _fpp_bundles_manage_bundle($action, $bid = NULL) {
+  if ($action == 'create') {
+    $bundle = new \FppBundle();
 
-  // If we have "bid" (bundle id), then action can be only "edit" or "delete".
-  if ($bid) {
-    $bundle = $module->getBundleByDbIndex('primary', $bid);
-
-    // Go to entities list if bundle has not stored in DB.
-    if (!$bundle) {
-      drupal_goto(\FppBundlesModule::ENTITY_URL);
+    if (isset($bid)) {
+      drupal_goto(_fpp_bundles_get_menu_path($action));
     }
   }
   else {
-    $bundle = new \FppBundle();
+    $bundle = fpp_bundles_db()->getBundleByDbIndex('primary', $bid);
   }
 
-  return drupal_get_form(__FUNCTION__ . '_form', $bundle, $action, drupal_set_title($module->getActionTitle($action)));
+  if (!$bundle) {
+    drupal_goto(FPP_BUNDLES_ADMIN_URL);
+  }
+
+  return drupal_get_form(__FUNCTION__ . '_form', $bundle, $action, drupal_set_title(_fpp_bundles_get_action_title($action)));
 }
 
 /**
@@ -134,7 +215,7 @@ function _fpp_bundles_manage_bundle($action, $bid = 0) {
  */
 function _fpp_bundles_autocomplete_category($string) {
   $matches = array();
-  $result = fpp_bundles()
+  $result = fpp_bundles_db()
     ->prepareBundles()
     ->condition('category', "%$string%", 'like')
     ->range(0, 15)
@@ -168,7 +249,6 @@ function _fpp_bundles_autocomplete_category($string) {
  */
 function _fpp_bundles_manage_bundle_form(array $form, array &$form_state, \FppBundle $bundle, $action, $page_title) {
   $bundle_name = $bundle->getHumanName();
-  $menu_paths = fpp_bundles()->getMenuPaths();
   $items = array();
 
   // Create hidden fields.
@@ -194,7 +274,7 @@ function _fpp_bundles_manage_bundle_form(array $form, array &$form_state, \FppBu
     '#type' => 'textfield',
     '#title' => t('Bundle category'),
     '#default_value' => $bundle->getCategoryName(),
-    '#autocomplete_path' => $menu_paths['autocomplete category'],
+    '#autocomplete_path' => _fpp_bundles_get_menu_path('autocomplete category'),
   );
 
   $items['level'] = array(
@@ -211,9 +291,6 @@ function _fpp_bundles_manage_bundle_form(array $form, array &$form_state, \FppBu
   $form['actions']['save'] = array(
     '#type' => 'submit',
     '#value' => $page_title,
-    '#validate' => array(
-      __FUNCTION__ . '_validate',
-    ),
   );
 
   if ($action == 'remove') {
@@ -232,27 +309,30 @@ function _fpp_bundles_manage_bundle_form(array $form, array &$form_state, \FppBu
  * Validation handler for _fpp_bundles_manage_bundle_form().
  */
 function _fpp_bundles_manage_bundle_form_validate(array $form, array &$form_state) {
-  $module = fpp_bundles();
   $values =& $form_state['values'];
 
-  foreach (array('name', 'category') as $field) {
-    $values[$field] = $module->createName($values[$field]);
+  // For "create" and "update" actions.
+  if ($values['action'] != 'remove') {
+    foreach (array('name', 'category') as $field) {
+      $values[$field] = _fpp_bundles_create_name($values[$field]);
+    }
+
+    if (empty($values['name'])) {
+      form_set_error('name', t('The name of bundle should not be empty and can contain only latin letters.'));
+    }
+    elseif (!strlen(preg_replace('/\d+|\s+/', '', $values['name']))) {
+      form_set_error('name', t('The name of bundle should not contain only numbers.'));
+    }
+    elseif (strlen($values['name']) < FPP_BUNDLES_MINIMUM_CHARS_FOR_NAME) {
+      form_set_error('name', t('The name of bundle should contain more than !number symbols.', array(
+        '!number' => FPP_BUNDLES_MINIMUM_CHARS_FOR_NAME,
+      )));
+    }
   }
 
-  if (empty($values['name'])) {
-    form_set_error('name', t('The name of bundle should not be empty and can contain only latin letters.'));
-  }
-  elseif (!strlen(preg_replace('/\d+|\s+/', '', $values['name']))) {
-    form_set_error('name', t('The name of bundle should not contain only numbers.'));
-  }
-  elseif (strlen($values['name']) < FPP_BUNDLES_MINIMUM_CHARS_FOR_NAME) {
-    form_set_error('name', t('The name of bundle should contain more than !number symbols.', array(
-      '!number' => FPP_BUNDLES_MINIMUM_CHARS_FOR_NAME,
-    )));
-  }
-
+  // The "create" action only.
   if ($values['action'] == 'create') {
-    $values['machine'] = $module->createMachineName($values['name']);
+    $values['machine'] = _fpp_bundles_create_machine_name($values['name']);
 
     if (isset(fpp_bundles_get_fieldable_panels_pane_entity()->bundles[$values['machine']])) {
       form_set_error('name', t('The bundle with such name is already exists!'));
@@ -262,7 +342,7 @@ function _fpp_bundles_manage_bundle_form_validate(array $form, array &$form_stat
   }
 
   try {
-    $form_state['bundle'] = $module->prepareBundleData($values);
+    $form_state['bundle'] = fpp_bundles_db()->prepareBundleData($values);
   }
   catch (\FppBundlesException $e) {
     form_set_error('name', $e->getMessage());
@@ -276,15 +356,14 @@ function _fpp_bundles_manage_bundle_form_submit(array $form, array &$form_state)
   $values = $form_state['values'];
 
   // @todo Remove all fields of the bundle together with it.
-  fpp_bundles()->{$values['action'] . 'Bundle'}($form_state['bundle']);
-
-  \FppBundlesModule::clearCaches();
+  fpp_bundles_db()->{$values['action'] . 'Bundle'}($form_state['bundle']);
+  _fpp_bundles_clear_caches();
 
   drupal_set_message(t('Operation over the "!bundle" bundle has been successfully completed.', array(
     '!bundle' => $values['name'],
   )));
 
-  $form_state['redirect'] = \FppBundlesModule::ENTITY_URL;
+  $form_state['redirect'] = FPP_BUNDLES_ADMIN_URL;
 }
 
 /**
@@ -296,13 +375,9 @@ function _fpp_bundles_manage_bundle_form_submit(array $form, array &$form_state)
 function _fpp_bundles_entities_page() {
   $items = $rows = array();
 
-  $module = fpp_bundles();
-  $menu_paths = $module->getMenuPaths();
-  $manage_url = $module->getEntityManageUrl();
-
   /* @var \FppBundle $bundle */
-  foreach ($module->getAllBundles(10) as $machine_name => $bundle) {
-    $manage_entity_url = "$manage_url/$machine_name";
+  foreach (fpp_bundles_db()->getAllBundles(10) as $machine_name => $bundle) {
+    $manage_entity_url = FPP_BUNDLES_ADMIN_URL . "/manage/$machine_name";
     $actions = array();
 
     $actions['entity'] = _fpp_bundles_build_links_for_operations_with_bundle($manage_entity_url);
@@ -313,7 +388,7 @@ function _fpp_bundles_entities_page() {
     ) as $action_type => $action_name) {
       $actions['bundle'][$action_type] = array(
         'title' => $action_name,
-        'href' => $menu_paths[$action_type] . '/' . $bundle->getBundleId(),
+        'href' => _fpp_bundles_get_menu_path($action_type) . '/' . $bundle->getBundleId(),
       );
     }
 
@@ -429,4 +504,74 @@ function _fpp_bundles_get_bundles_stored_in_code() {
     ),
     '#rows' => $rows,
   );
+}
+
+/**
+ * Get the URL by action name.
+ *
+ * @param string $action_name
+ *   Name of performed action.
+ *
+ * @return string
+ *   Relative URL or an empty string if action does not exist.
+ */
+function _fpp_bundles_get_menu_path($action_name) {
+  $paths = fpp_bundles('menu_paths');
+  return isset($paths[$action_name]) ? $paths[$action_name] : '';
+}
+
+/**
+ * Get the title by action name.
+ *
+ * @param string $action_name
+ *   Name of performed action.
+ *
+ * @return string
+ *   Title for the specified action or an empty string if action does not exist.
+ */
+function _fpp_bundles_get_action_title($action_name) {
+  $titles = fpp_bundles('action_titles');
+  return isset($titles[$action_name]) ? $titles[$action_name] : '';
+}
+
+/**
+ * Transform a any string to machine name.
+ *
+ * @param string $string
+ *   Input string for transformations.
+ *
+ * @example
+ *   String: "__-_   An awe-some manager!#$%^&_+123=-ÆæØä'Ö\"@ (bundle)"
+ *   Will be transformed to: "an_awe_some_manager123_bundle".
+ *
+ * @return string
+ *   Generated name.
+ */
+function _fpp_bundles_create_machine_name($string) {
+  // Firstly, set to lowercase the input string. Secondly, leave in a
+  // row only lowercase latin characters, numbers, and single spaces,
+  // but only between the words. Thirdly, replace spaces to underscores, and,
+  // fourthly, remove underscores from start and end of line.
+  return trim(preg_replace('/\s+|-+/', '_', trim(preg_replace('/[^a-z\d\s-]/', '', strtolower($string)))), '_');
+}
+
+/**
+ * Transform any string to human readable name.
+ *
+ * @param string $string
+ *   Input string for transformations.
+ *
+ * @return string
+ *   Generated name.
+ */
+function _fpp_bundles_create_name($string) {
+  return trim(preg_replace('/\s+/', ' ', preg_replace('/[^\w+]|\+|_/i', ' ', $string)));
+}
+
+/**
+ * Clear caches of the Drupal theme and entities.
+ */
+function _fpp_bundles_clear_caches() {
+  entity_info_cache_clear();
+  drupal_theme_rebuild();
 }
