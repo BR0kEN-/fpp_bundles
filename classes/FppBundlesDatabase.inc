@@ -271,10 +271,7 @@ class FppBundlesDatabase {
    * @see db_delete()
    *
    * @throws \Exception
-   *   When query cannot be performed.
-   *
-   * @throws \FppBundlesException
-   *   When action is incorrect.
+   *   When query cannot be performed or an action is incorrect.
    *
    * @return \DatabaseStatementInterface|int
    *   An interface on "update" and "delete" actions
