@@ -272,6 +272,7 @@ class FppBundlesDatabase {
    *
    * @throws \Exception
    *   When query cannot be performed.
+   *
    * @throws \FppBundlesException
    *   When action is incorrect.
    *
