@@ -36,7 +36,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    */
   public function setUp() {
     $this->db = fpp_bundles_db();
-    parent::setUp(FPP_BUNDLES_MODULE_MACHINE_NAME);
+    parent::setUp(FPP_BUNDLES_MACHINE_NAME);
     $this->drupalLogin($this->drupalCreateUser(array(FPP_BUNDLES_ENTITY_ACCESS)));
   }
 
@@ -56,22 +56,15 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
   /**
    * Programmatically creating the bundle in database.
    *
+   * @param array $bundle
+   *   An array with bundle data.
+   *
    * @return array
    *   Information about bundle that has been created.
    */
-  public function createBundleProgrammatically() {
-    $human_name = $this->randomName(14);
-    $category_name = $this->randomName(8);
-
-    $bundle = array(
-      'name' => $human_name,
-      'level' => 0,
-      'machine' => _fpp_bundles_create_machine_name($human_name),
-      'category' => $category_name,
-    );
-
+  public function createBundleProgrammatically(array $bundle) {
     try {
-      $bundle['bid'] = $this->db->createBundle($this->db->prepareBundleData($bundle));
+      $bundle['bid'] = $this->db->insertBundle($this->db->prepareBundleData($bundle));
     }
     catch (\FppBundlesException $e) {
       $this->error($e->getMessage());
@@ -85,13 +78,19 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
   /**
    * Get the necessary data for creating the bundle.
    *
+   * @param string $human_name
+   *   The bundle name.
+   *
    * @return array
    *   Information.
    */
-  public function getRandomBundleData() {
+  public function getRandomBundleData($human_name = '') {
+    $human_name = $human_name ?: $this->randomString(14);
+
     $edit = array();
-    $edit['name'] = _fpp_bundles_create_name("__-_ An awe-some manager!#$%^&_+123=-ÆæØøäÄö'Ö\"@ (bundle)");
+    $edit['name'] = $human_name;
     $edit['level'] = 0;
+    $edit['machine'] = preg_replace('/[^a-z0-9_]+/', '_', strtolower($human_name));
     $edit['category'] = $this->randomName(8);
 
     return $edit;
@@ -101,7 +100,7 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    * Creating a new bundle.
    */
   public function testCreateBundle() {
-    $action = 'create';
+    $action = FPP_BUNDLES_CREATE_BUNDLE_ACTION;
     $url = $this->getActionUrl($action);
 
     // Go to the creating page.
@@ -110,23 +109,21 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
     $this->assertFieldByName('name', '', 'Found the "name" field in creating form.');
 
     // Create new bundle.
-    $edit = $this->getRandomBundleData();
+    $edit = $this->getRandomBundleData('Test bundle');
+    $message = _fpp_bundles_get_action_success_message_by_name($action, $edit['name']);
     $this->drupalPost($url, $edit, _fpp_bundles_get_action_title($action));
-    $this->assertResponse(200, 'The bundle was successfully created.');
-    $this->assertText($edit['name'], 'Found the name of created bundle in table.');
+    $this->assertResponse(200, 'The request for bundle creation has been successfully sent.');
+    $this->assertText($message, $message);
   }
 
   /**
    * Test case, when the name consists only from cyrillic letters.
    */
   public function testCreateBundleWithCyrillicSymbols() {
-    $action = 'create';
-    $edit = $this->getRandomBundleData();
-    $edit['name'] = '  Тестовый бандл';
+    $action = FPP_BUNDLES_CREATE_BUNDLE_ACTION;
+    $message = t('The machine-readable name must contain unique characters.');
 
-    $message = t('The name of bundle should not be empty and can contain only latin letters.');
-
-    $this->drupalPost($this->getActionUrl($action), $edit, _fpp_bundles_get_action_title($action));
+    $this->drupalPost($this->getActionUrl($action), $this->getRandomBundleData('Кириллица'), _fpp_bundles_get_action_title($action));
     $this->assertText($message, $message);
   }
 
@@ -134,27 +131,23 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    * Test case, when the name consists only from numbers.
    */
   public function testCreateBundleWithNumbers() {
-    $action = 'create';
-    $edit = $this->getRandomBundleData();
-    $edit['name'] = ' 22 1212 3432';
-
+    $action = FPP_BUNDLES_CREATE_BUNDLE_ACTION;
     $message = t('The name of bundle should not contain only numbers.');
 
-    $this->drupalPost($this->getActionUrl($action), $edit, _fpp_bundles_get_action_title($action));
+    $this->drupalPost($this->getActionUrl($action), $this->getRandomBundleData(' 22 1212 3432'), _fpp_bundles_get_action_title($action));
     $this->assertText($message, $message);
   }
 
   /**
    * Test case, when the name consists less than five symbols.
    */
-  public function testCreateBundleWithNameLessThanFiveSymbols() {
-    $action = 'create';
-    $edit = $this->getRandomBundleData();
-    $edit['name'] = ' Bund _!#$%^&_+=-ÆæØ';
+  public function testCreateBundleWithShortName() {
+    $action = FPP_BUNDLES_CREATE_BUNDLE_ACTION;
+    $message = t('The name of bundle should contain more than !number symbols.', array(
+      '!number' => FPP_BUNDLES_MINIMUM_CHARS_FOR_NAME,
+    ));
 
-    $message = t('The name of bundle should contain more than 5 symbols.');
-
-    $this->drupalPost($this->getActionUrl($action), $edit, _fpp_bundles_get_action_title($action));
+    $this->drupalPost($this->getActionUrl($action), $this->getRandomBundleData(' B1'), _fpp_bundles_get_action_title($action));
     $this->assertText($message, $message);
   }
 
@@ -163,8 +156,8 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    */
   public function testUpdateBundle() {
     // Create the bundle.
-    $action = 'update';
-    $bundle = $this->createBundleProgrammatically();
+    $action = FPP_BUNDLES_UPDATE_BUNDLE_ACTION;
+    $bundle = $this->createBundleProgrammatically($this->getRandomBundleData('The bundle name'));
     $url = $this->getActionUrl($action . '/' . $bundle['bid']);
 
     // Go to the editing page.
@@ -173,10 +166,13 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
     $this->assertFieldByName('name', $bundle['name'], 'Found filled field "name" on the edit form.');
 
     // Update data.
-    $edit = $this->getRandomBundleData();
-    $this->drupalPost($url, $edit, _fpp_bundles_get_action_title($action));
-    $this->assertResponse(200, 'The bundle was successfully updated.');
-    $this->assertText($edit['name'], 'Found the name of updated bundle in table.');
+    $bundle['name'] = 'Updated bundle';
+    unset($bundle['machine']);
+
+    $message = _fpp_bundles_get_action_success_message_by_name($action, $bundle['name']);
+    $this->drupalPost($url, $bundle, _fpp_bundles_get_action_title($action));
+    $this->assertResponse(200, 'The request for bundle updating has been successfully sent.');
+    $this->assertText($message, $message);
   }
 
   /**
@@ -184,8 +180,8 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
    */
   public function testRemoveBundle() {
     // Create the bundle.
-    $action = 'remove';
-    $bundle = $this->createBundleProgrammatically();
+    $action = FPP_BUNDLES_REMOVE_BUNDLE_ACTION;
+    $bundle = $this->createBundleProgrammatically($this->getRandomBundleData('The bundle name'));
     $url = $this->getActionUrl($action . '/' . $bundle['bid']);
 
     // Go to the removing page.
@@ -194,9 +190,9 @@ class FppBundlesTestCase extends \DrupalWebTestCase {
     $this->assertText($bundle['name'], 'Found filled field "name" on the edit form.');
 
     // Remove the bundle.
-    $edit = $this->getRandomBundleData();
+    $message = _fpp_bundles_get_action_success_message_by_name($action, $bundle['name']);
     $this->drupalPost($url, array(), _fpp_bundles_get_action_title($action));
-    $this->assertResponse(200, 'The bundle was successfully removed.');
-    $this->assertNoText($edit['name'], 'Name of the bundle was not found in bundles table.');
+    $this->assertResponse(200, 'The request for bundle deletion has been successfully sent.');
+    $this->assertText($message, $message);
   }
 }

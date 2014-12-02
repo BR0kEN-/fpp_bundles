@@ -231,8 +231,8 @@ class FppBundlesDatabase {
    * @return int
    *   Last insert ID.
    */
-  public function createBundle(array $bundle) {
-    return db_insert($this->table)->fields($bundle)->execute();
+  public function insertBundle(array $bundle) {
+    return $this->performAction(FPP_BUNDLES_CREATE_BUNDLE_ACTION, $bundle);
   }
 
   /**
@@ -242,13 +242,7 @@ class FppBundlesDatabase {
    *   Bundle object.
    */
   public function updateBundle(array $bundle) {
-    $bid = $bundle[$this->indexes['primary']];
-    unset($bundle[$this->indexes['primary']]);
-
-    db_update($this->table)
-      ->fields($bundle)
-      ->condition($this->indexes['primary'], $bid, '=')
-      ->execute();
+    $this->performAction(FPP_BUNDLES_UPDATE_BUNDLE_ACTION, $bundle);
   }
 
   /**
@@ -257,8 +251,61 @@ class FppBundlesDatabase {
    * @param array $bundle
    *   Bundle object.
    */
-  public function removeBundle(array $bundle) {
-    db_delete($this->table)->condition($this->indexes['primary'], $bundle[$this->indexes['primary']], '=')->execute();
+  public function deleteBundle(array $bundle) {
+    $this->performAction(FPP_BUNDLES_REMOVE_BUNDLE_ACTION, $bundle);
+  }
+
+  /**
+   * Perform a database action over the bundle.
+   *
+   * @param string $action
+   *   An action name. Can be a value the one of next constants:
+   *   FPP_BUNDLES_CREATE_BUNDLE_ACTION - insert a new entry in DB;
+   *   FPP_BUNDLES_UPDATE_BUNDLE_ACTION - update an existing entry.
+   *   FPP_BUNDLES_REMOVE_BUNDLE_ACTION - delete an existing entry.
+   * @param array $bundle
+   *   Bundle data.
+   *
+   * @see db_insert()
+   * @see db_update()
+   * @see db_delete()
+   *
+   * @throws \Exception
+   *   When query cannot be performed.
+   * @throws \FppBundlesException
+   *   When action is incorrect.
+   *
+   * @return \DatabaseStatementInterface|int
+   *   An interface on "update" and "delete" actions
+   *   or ID of a new entry on "insert" action.
+   */
+  public function performAction($action, array $bundle) {
+    $action = "db_$action";
+
+    if (!function_exists($action)) {
+      throw \FppBundlesException::set('Incorrect action over the bundle!');
+    }
+
+    $query = call_user_func($action, $this->table);
+    $index = $this->indexes['primary'];
+    $bundle_id = 0;
+
+    if (isset($bundle[$index])) {
+      $bundle_id = $bundle[$index];
+      unset($bundle[$index]);
+    }
+
+    if (!($query instanceof \DeleteQuery)) {
+      /* @var \UpdateQuery|\InsertQuery $query */
+      $query->fields($bundle);
+    }
+
+    if ($bundle_id && !($query instanceof \InsertQuery)) {
+      /* @var \UpdateQuery|\DeleteQuery $query */
+      $query->condition($index, $bundle_id, '=');
+    }
+
+    return $query->execute();
   }
 
   /**

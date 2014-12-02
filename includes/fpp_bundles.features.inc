@@ -25,7 +25,22 @@ function fpp_bundles_features_export($data, &$export, $feature_name, $module_nam
   $export['dependencies'][$module_name] = $module_name;
 
   foreach ($data as $bundle_machine_name) {
+    $bundle_fields = db_select('field_config_instance', 'fci')
+      ->fields('fci', array('field_name'))
+      ->condition('bundle', $bundle_machine_name, '=')
+      ->execute()
+      ->fetchCol();
+
     $export['features'][$module_name][$bundle_machine_name] = $bundle_machine_name;
+
+    foreach ($bundle_fields as $field_name) {
+      $field = features_field_base_load($field_name);
+
+      if ($field) {
+        $export['dependencies'][$field['module']] = $field['module'];
+        $export['features']['field_base'][$field_name] = $field_name;
+      }
+    }
   }
 
   return array();
@@ -46,7 +61,7 @@ function fpp_bundles_features_export_render($feature_name, $data, $export = NULL
   }
 
   return array(
-    FPP_BUNDLES_MODULE_MACHINE_NAME => '  return ' . features_var_export($code, '  ') . ';',
+    FPP_BUNDLES_MACHINE_NAME => '  return ' . features_var_export($code, '  ') . ';',
   );
 }
 
@@ -56,7 +71,7 @@ function fpp_bundles_features_export_render($feature_name, $data, $export = NULL
 function fpp_bundles_features_rebuild($feature_name) {
   $db = fpp_bundles_db();
 
-  foreach (module_invoke($feature_name, FPP_BUNDLES_MODULE_MACHINE_NAME) as $machine_name => $values) {
+  foreach (module_invoke($feature_name, FPP_BUNDLES_MACHINE_NAME) as $machine_name => $values) {
     if (!$db->getBundleByName($machine_name)) {
       $db->createBundle($values);
     }
