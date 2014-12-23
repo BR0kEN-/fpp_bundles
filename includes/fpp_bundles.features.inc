@@ -53,7 +53,7 @@ function fpp_bundles_features_export_render($feature_name, $data, $export = NULL
   $code = array();
 
   foreach ($data as $bundle_machine_name) {
-    $bundle = fpp_bundles_db()->getBundleByName($bundle_machine_name);
+    $bundle = fpp_bundles_db()->getBundleByMachineName($bundle_machine_name);
 
     if ($bundle) {
       $code += $bundle->export();
@@ -72,8 +72,8 @@ function fpp_bundles_features_rebuild($feature_name) {
   $db = fpp_bundles_db();
 
   foreach (module_invoke($feature_name, FPP_BUNDLES_MACHINE_NAME) as $machine_name => $values) {
-    if (!$db->getBundleByName($machine_name)) {
-      $db->createBundle($values);
+    if (!$db->getBundleByMachineName($machine_name)) {
+      $db->insertBundle($values);
     }
   }
 

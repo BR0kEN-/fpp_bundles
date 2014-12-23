@@ -178,7 +178,7 @@ class FppBundlesDatabase {
   }
 
   /**
-   * Get bundle by it machine name.
+   * Get the bundle by machine name.
    *
    * @param string $machine_name
    *   Machine readable name of the bundle.
@@ -186,14 +186,14 @@ class FppBundlesDatabase {
    * @return \FppBundle|bool
    *   An instance ob the bundle object or false if it does not exist.
    */
-  public function getBundleByName($machine_name) {
+  public function getBundleByMachineName($machine_name) {
     $bundles = $this->getAllBundles();
 
     return isset($bundles[$machine_name]) ? $bundles[$machine_name] : FALSE;
   }
 
   /**
-   * Get machine names of the all bundles.
+   * Get machine names of all bundles.
    *
    * @return array
    *   An array where each item - an unique machine name of the bundle.
@@ -337,7 +337,7 @@ class FppBundlesDatabase {
   }
 
   /**
-   * Create/get an instance of object.
+   * Create/get an instance of an object.
    *
    * @see self::__construct()
    *
