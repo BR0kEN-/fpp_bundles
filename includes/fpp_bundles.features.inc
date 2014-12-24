@@ -23,6 +23,7 @@ function fpp_bundles_features_export_options() {
  */
 function fpp_bundles_features_export($data, &$export, $feature_name, $module_name) {
   $export['dependencies'][$module_name] = $module_name;
+  $pipe = array();
 
   foreach ($data as $bundle_machine_name) {
     $bundle_fields = db_select('field_config_instance', 'fci')
@@ -34,16 +35,19 @@ function fpp_bundles_features_export($data, &$export, $feature_name, $module_nam
     $export['features'][$module_name][$bundle_machine_name] = $bundle_machine_name;
 
     foreach ($bundle_fields as $field_name) {
-      $field = features_field_base_load($field_name);
+      $instance_identifier = FPP_BUNDLES_ENTITY_TYPE . "-$bundle_machine_name-$field_name";
+      $field_instance = features_field_instance_load($instance_identifier);
 
-      if ($field) {
-        $export['dependencies'][$field['module']] = $field['module'];
-        $export['features']['field_base'][$field_name] = $field_name;
+      if ($field_instance) {
+        $export['dependencies'][$field_instance['widget']['module']] = $field_instance['widget']['module'];
+        $export['features']['field_instance'][$instance_identifier] = $instance_identifier;
+
+        $pipe['field_base'][] = $field_instance['field_name'];
       }
     }
   }
 
-  return array();
+  return $pipe;
 }
 
 /**
