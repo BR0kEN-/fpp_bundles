@@ -23,29 +23,29 @@ function fpp_bundles_features_export_options() {
  */
 function fpp_bundles_features_export($data, &$export, $feature_name, $module_name) {
   $export['dependencies'][$module_name] = $module_name;
+  $prop = 'field' . (FEATURES_API >= 2 ? '_instance' : '');
   $pipe = array();
 
   foreach ($data as $bundle_machine_name) {
+    $export['features'][$module_name][$bundle_machine_name] = $bundle_machine_name;
+
     $bundle_fields = db_select('field_config_instance', 'fci')
       ->fields('fci', array('field_name'))
       ->condition('bundle', $bundle_machine_name, '=')
       ->execute()
       ->fetchCol();
 
-    $export['features'][$module_name][$bundle_machine_name] = $bundle_machine_name;
-
     foreach ($bundle_fields as $field_name) {
-      $field_instance_arguments = array(FPP_BUNDLES_ENTITY_TYPE, $bundle_machine_name, $field_name);
-      $field_instance = call_user_func_array('field_info_instance', $field_instance_arguments);
+      $field_instance_args = array(FPP_BUNDLES_ENTITY_TYPE, $bundle_machine_name, $field_name);
+      $field_instance_id = implode('-', $field_instance_args);
+      $field_instance = call_user_func_array('field_info_instance', $field_instance_args);
 
       if ($field_instance) {
-        $field_instance_id = implode('-', $field_instance_arguments);
-
         $export['dependencies'][$field_instance['widget']['module']] = $field_instance['widget']['module'];
-        $export['features']['field_instance'][$field_instance_id] = $field_instance_id;
-
-        $pipe['field_base'][] = $field_instance['field_name'];
       }
+
+      $export['features'][$prop][$field_instance_id] = $field_instance_id;
+      $pipe['field_base'][$field_name] = $field_name;
     }
   }
 
