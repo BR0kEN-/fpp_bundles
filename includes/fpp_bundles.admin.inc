@@ -45,7 +45,7 @@ function _fpp_bundles_manage_bundle($action, $bid = NULL) {
 function _fpp_bundles_autocomplete_category($string) {
   $matches = array();
   $result = fpp_bundles_db()
-    ->prepareBundles()
+    ->bundleSelectQuery()
     ->condition('category', "%$string%", 'like')
     ->range(0, 15)
     ->execute();

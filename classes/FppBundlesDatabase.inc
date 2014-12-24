@@ -138,7 +138,7 @@ class FppBundlesDatabase {
       return FALSE;
     }
 
-    return $this->prepareBundles()
+    return $this->bundleSelectQuery()
       ->condition($this->indexes[$index_name], $value, '=')
       ->execute()
       ->fetchObject(self::BUNDLE_CLASS_NAME);
@@ -155,7 +155,7 @@ class FppBundlesDatabase {
    */
   public function getAllBundles($per_page = 0) {
     if (!$this->allBundles) {
-      $query = $this->prepareBundles();
+      $query = $this->bundleSelectQuery();
 
       if ($per_page && is_int($per_page)) {
         /* @var \PagerDefault $query */
@@ -198,7 +198,7 @@ class FppBundlesDatabase {
    * @return array
    *   An array where each item - an unique machine name of the bundle.
    */
-  public function getAllBundleMachineNames() {
+  public function getAllBundlesMachineNames() {
     return array_keys($this->getAllBundles());
   }
 
@@ -218,7 +218,7 @@ class FppBundlesDatabase {
    * @return \SelectQuery
    *   Database object for select query.
    */
-  public function prepareBundles() {
+  public function bundleSelectQuery() {
     return db_select($this->table)->fields($this->table, $this->getAllSchemaFields());
   }
 

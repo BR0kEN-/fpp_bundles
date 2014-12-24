@@ -207,7 +207,7 @@ function _fpp_bundles_entities_page() {
       );
     }
 
-    foreach (array('entity', 'bundle') as $action_type) {
+    foreach (array_keys($actions) as $action_type) {
       $actions[$action_type] = _fpp_bundles_theme_links_block($actions[$action_type]);
     }
 
@@ -420,5 +420,5 @@ function _fpp_bundles_get_action_success_message_by_name($action, $bundle_name) 
     ));
   }
 
-  return '';
+  return $status;
 }
