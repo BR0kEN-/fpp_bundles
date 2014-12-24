@@ -35,12 +35,14 @@ function fpp_bundles_features_export($data, &$export, $feature_name, $module_nam
     $export['features'][$module_name][$bundle_machine_name] = $bundle_machine_name;
 
     foreach ($bundle_fields as $field_name) {
-      $instance_identifier = FPP_BUNDLES_ENTITY_TYPE . "-$bundle_machine_name-$field_name";
-      $field_instance = features_field_instance_load($instance_identifier);
+      $field_instance_arguments = array(FPP_BUNDLES_ENTITY_TYPE, $bundle_machine_name, $field_name);
+      $field_instance = call_user_func_array('field_info_instance', $field_instance_arguments);
 
       if ($field_instance) {
+        $field_instance_id = implode('-', $field_instance_arguments);
+
         $export['dependencies'][$field_instance['widget']['module']] = $field_instance['widget']['module'];
-        $export['features']['field_instance'][$instance_identifier] = $instance_identifier;
+        $export['features']['field_instance'][$field_instance_id] = $field_instance_id;
 
         $pipe['field_base'][] = $field_instance['field_name'];
       }
