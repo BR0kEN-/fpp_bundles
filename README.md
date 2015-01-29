@@ -13,7 +13,72 @@ drush en fpp_bundles -y
 
 **Manual:**
 - Download the release from [drupal.org](https://www.drupal.org/project/fpp_bundles);
+- Put the unpacked folder into your Drupal installation "modules" directory;
 - Go to `/admin/modules` and enable the module.
+
+## Documentation
+
+### API hooks
+
+See all hooks and their description in [fpp_bundles.api.php](fpp_bundles.api.php).
+
+### Helper functions
+
+Programmatically creation of a bundle:
+
+```php
+// If the value of "$status" variable will be TRUE, then bundle was
+// created successfully. In another case, when machine name is
+// already exist, the error message will be stored in the Dblog 
+// and the value will be FALSE.
+$status = fpp_bundles_save(array(
+  // The "name" is required.
+  'name' => 'Video',
+  // By default it set to "0",
+  'level' => 1,
+  // By default it set to "1".
+  'assets' => 0,
+  // By default it is empty.
+  'category' => 'Media',
+));
+```
+
+Programmatically update the bundle:
+
+```php
+// Change only one parameter of the bundle.
+$status = fpp_bundles_save(array(
+  // The ID of created bundle.
+  'bid' => 1,
+  // Change "assets" to "1".
+  'assets' => 1,
+));
+```
+
+Programmatically remove the bundle:
+
+```php
+// Remove the bundle by ID. If bundle with such ID does not exist,
+// then error message will be stored in the Dblog and a value
+// of "$status" variable will be FALSE.
+$status = fpp_bundles_remove(1);
+```
+
+### Best practices
+
+Creating the new bundle with frontend and backend parts.
+
+- Create the bundle from UI with name `Media`;
+  - Correct the machine name of bundle by adding prefix `fpp_` (after changes it should be `fpp_media`);
+  - If necessary, type the name of category and check/uncheck the box that allow you to see the bundle in general list;
+  - Do not uncheck the box that indicate that CSS & JS for panel will be included automatically if they are exists;
+  - Create a bundle and add necessary fields and field groups, configure the displays;
+- Create the template, CSS and JS if needed;
+  - Put your template file in: `path/to/theme/templates/fieldable-panels-panes/fieldable-panels-pane--fpp-media.tpl.php`;
+  - Put your CSS file in: `path/to/theme/css/fieldable-panels-panes/fpp-media.css`;
+  - Put your JS file in: `path/to/theme/js/fieldable-panels-panes/fpp-media.js`;
+- Export the bundle via Features;
+- Commit created feature and theming files using your VCS system.
 
 ## Changelog
 
