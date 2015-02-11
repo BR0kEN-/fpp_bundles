@@ -64,6 +64,23 @@ Programmatically remove the bundle:
 $status = fpp_bundles_remove(1);
 ```
 
+Append your own assets in `preprocess` hooks:
+
+```php
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function hook_preprocess_fieldable_panels_pane(&$variables) {
+  $entity = $variables['elements']['#element'];
+
+  // The "assets" property provided by "FPP Bundles" module
+  // and allowed only for panels, created from UI.
+  if (isset($entity->assets)) {
+    $entity->assets['css'][] = 'path/to/your/own/file.css';
+  }
+}
+```
+
 ### Best practices
 
 Creating the new bundle with frontend and backend parts.
@@ -77,6 +94,7 @@ Creating the new bundle with frontend and backend parts.
   - Put your template file in: `path/to/theme/templates/fieldable-panels-panes/fieldable-panels-pane--fpp-media.tpl.php`;
   - Put your CSS file in: `path/to/theme/css/fieldable-panels-panes/fpp-media.css`;
   - Put your JS file in: `path/to/theme/js/fieldable-panels-panes/fpp-media.js`;
+  - If needed, put the CSS or/and JS in `path/to/theme/[js/css]/fieldable-panels-panes/admin/fpp-media-admin.[js/css]`;
 - Export the bundle via Features;
 - Commit created feature and theming files using your VCS system.
 
@@ -98,6 +116,10 @@ Creating the new bundle with frontend and backend parts.
 - Added an option to automatically load CSS & JS for a panel.
 - Added the help section at `/admin/help/fpp_bundles`.
 - Improved SimpleTest.
+
+**Version [1.4](https://github.com/BR0kEN-/fpp_bundles/tree/7.x-1.4)**, February 11, 2015:
+- Added the possibility to include CSS & JS for administrative users.
+- Updated the documentation.
 
 ## Authors
 

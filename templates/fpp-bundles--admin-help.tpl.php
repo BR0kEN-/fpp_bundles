@@ -19,6 +19,13 @@
     <li>PATH/TO/THEME/css/fieldable-panels-panes/media-bundle.css</li>
     <li>PATH/TO/THEME/js/fieldable-panels-panes/media-bundle.js</li>
   </ul>
+  <p>
+    <?php print t('Also, for <b>administrative users</b> can be added the additional assets. The files should be placed and named the same as in the next example:'); ?>
+  </p>
+  <ul>
+    <li>PATH/TO/THEME/css/fieldable-panels-panes/admin/media-bundle-admin.css</li>
+    <li>PATH/TO/THEME/js/fieldable-panels-panes/admin/media-bundle-admin.js</li>
+  </ul>
   <h4 role="heading">
     <?php print t('Templates'); ?>
   </h4>
@@ -106,6 +113,25 @@ $status = fpp_bundles_save(array(
 // then error message will be stored in the Dblog and a value
 // of "$status" variable will be FALSE.
 $status = fpp_bundles_remove(1);
+    </pre>
+  </div>
+  <div>
+    <strong>
+      <?php print t('Append your own assets in <b>preprocess</b> hooks:'); ?>
+    </strong>
+    <pre>
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function hook_preprocess_fieldable_panels_pane(&$variables) {
+  $entity = $variables['elements']['#element'];
+
+  // The "assets" property provided by "FPP Bundles" module
+  // and allowed only for panels, created from UI.
+  if (isset($entity->assets)) {
+    $entity->assets['css'][] = 'path/to/your/own/file.css';
+  }
+}
     </pre>
   </div>
   <p>
