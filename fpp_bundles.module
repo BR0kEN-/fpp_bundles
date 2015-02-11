@@ -236,29 +236,17 @@ function fpp_bundles_entity_info_alter(&$entity_info) {
  * Implements hook_entity_load().
  */
 function fpp_bundles_entity_load(array $entities, $type) {
-  static $data = array();
-
   if ($type == FPP_BUNDLES_ENTITY_TYPE) {
-    // Preventing a many-times functions calls.
-    if (!$data) {
-      $data['db'] = fpp_bundles_db();
-      $data['theme_path'] = path_to_theme();
-    }
+    $db = fpp_bundles_db();
 
     foreach ($entities as $entity) {
-      $bundle = $data['db']->getBundleByDbIndex('unique', $entity->bundle);
+      $bundle = $db->getBundleByDbIndex('unique', $entity->bundle);
 
       if ($bundle) {
         $entity->assets = array();
 
         if ($bundle->isAssetsLoadAutomatically()) {
-          foreach (array('css', 'js') as $extension) {
-            $file = str_replace('_', '-', "{$data['theme_path']}/$extension/{$type}s/$entity->bundle.$extension");
-
-            if (file_exists(DRUPAL_ROOT . "/$file")) {
-              $entity->assets[$extension] = $file;
-            }
-          }
+          _fpp_bundles_collect_assets($entity->assets, $entity->bundle);
         }
       }
     }
@@ -266,14 +254,21 @@ function fpp_bundles_entity_load(array $entities, $type) {
 }
 
 /**
- * Implements hook_fieldable_panels_pane_view().
+ * Implements hook_preprocess_HOOK().
  */
-function fpp_bundles_fieldable_panels_pane_view($entity, $view_mode, $langcode) {
-  // "assets" property is provided by this module and set only for entities,
-  // that has been created from UI.
+function fpp_bundles_preprocess_fieldable_panels_pane(&$variables) {
+  $entity = $variables['elements']['#element'];
+
+  // The "assets" property is provided by this module and set
+  // only for entities that has been created from UI.
   if (isset($entity->assets)) {
-    foreach ($entity->assets as $type => $file) {
-      call_user_func("drupal_add_$type", $file);
+    // Add additional assets for administrative users.
+    if ($variables['is_admin']) {
+      _fpp_bundles_collect_assets($entity->assets, "admin/$entity->bundle-admin");
+    }
+
+    foreach ($entity->assets as $type => $files) {
+      array_map("drupal_add_$type", $files);
     }
   }
 }
@@ -565,3 +560,24 @@ function _fpp_bundles_create_machine_name($string) {
   // but only between the words. Thirdly, replace spaces to underscores.
   return trim(preg_replace('/\s+|-+/', '_', trim(preg_replace('/[^a-z\d\s-]/', '', strtolower($string)))), '_');
 }
+
+/**
+ * Collect an assets for a panel.
+ *
+ * @param array $assets
+ *   An array with "css" & "js" keys.
+ * @param string $name
+ *   File name without extension.
+ */
+function _fpp_bundles_collect_assets(array &$assets, $name) {
+  $theme_path = path_to_theme();
+
+  foreach (array('css', 'js') as $extension) {
+    $file = $theme_path . str_replace('_', '-', "/$extension/fieldable-panels-panes/$name.$extension");
+
+    if (file_exists(DRUPAL_ROOT . "/$file")) {
+      $assets[$extension][] = $file;
+    }
+  }
+}
+
