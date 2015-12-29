@@ -19,4 +19,3 @@ version = "7.x-1.2"
 core = "7.x"
 project = "fpp_bundles"
 datestamp = "1419451981"
-
