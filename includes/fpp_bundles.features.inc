@@ -36,7 +36,11 @@ function fpp_bundles_features_export($data, &$export, $feature_name, $module_nam
       ->fetchCol();
 
     foreach ($bundle_fields as $field_name) {
-      $field_instance_args = array(FPP_BUNDLES_ENTITY_TYPE, $bundle_machine_name, $field_name);
+      $field_instance_args = array(
+        FPP_BUNDLES_ENTITY_TYPE,
+        $bundle_machine_name,
+        $field_name,
+      );
       $field_instance_id = implode('-', $field_instance_args);
       $field_instance = call_user_func_array('field_info_instance', $field_instance_args);
 

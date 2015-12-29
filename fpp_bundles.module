@@ -580,4 +580,3 @@ function _fpp_bundles_collect_assets(array &$assets, $name) {
     }
   }
 }
-

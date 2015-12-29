@@ -126,7 +126,7 @@ class FppBundle {
    * @throws \FppBundlesException
    *   When not all necessary properties was set.
    *
-   * @return $this
+   * @return object
    *   Bundle object.
    */
   public function import(array $bundle) {
