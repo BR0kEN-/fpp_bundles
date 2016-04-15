@@ -113,6 +113,11 @@ function fpp_bundles($option_name = '') {
  *   An object instance.
  */
 function fpp_bundles_db() {
+  // Class might not exist on module uninstallation stage.
+  if (!class_exists('FppBundlesDatabase')) {
+    require_once 'classes/FppBundlesDatabase.inc';
+  }
+
   return \FppBundlesDatabase::instance(FPP_BUNDLES_MACHINE_NAME);
 }
 
