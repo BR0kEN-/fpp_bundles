@@ -77,6 +77,7 @@ class FppBundlesDatabase {
       // Primary key - auto increment.
       'bid' => array(
         'type' => 'serial',
+        'not null' => TRUE,
         'unsigned' => TRUE,
         'description' => 'Bundle ID',
       ),
