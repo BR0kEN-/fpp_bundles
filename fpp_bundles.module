@@ -40,25 +40,6 @@ define('FPP_BUNDLES_UPDATE_BUNDLE_ACTION', 'update');
 define('FPP_BUNDLES_REMOVE_BUNDLE_ACTION', 'delete');
 
 /**
- * Implements hook_fpp_bundles_bundle_update().
- */
-function fpp_bundles_fpp_bundles_bundle_insert(\FppBundle $bundle) {
-  $_SESSION['test']['insert'] = $bundle;
-}
-/**
- * Implements hook_fpp_bundles_bundle_update().
- */
-function fpp_bundles_fpp_bundles_bundle_update(\FppBundle $bundle) {
-  $_SESSION['test']['update'] = $bundle;
-}
-/**
- * Implements hook_fpp_bundles_bundle_update().
- */
-function fpp_bundles_fpp_bundles_bundle_delete(\FppBundle $bundle) {
-  $_SESSION['test']['delete'] = $bundle;
-}
-
-/**
  * Main controller of the module.
  *
  * @param string $option_name
