@@ -51,7 +51,7 @@ define('FPP_BUNDLES_REMOVE_BUNDLE_ACTION', 'delete');
 function fpp_bundles($option_name = '') {
   static $settings = array();
 
-  if (!$settings) {
+  if (empty($settings)) {
     foreach (array(
       'autocomplete category' => array(
         'type' => MENU_CALLBACK,

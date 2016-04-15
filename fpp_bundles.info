@@ -2,6 +2,7 @@ name = FPP Bundles (Fieldable Panels Panes UI)
 description = Create your own "Fieldable Panels Pane" entity from admin interface, add fields on it and export it all with "Features".
 package = Panels
 core = 7.x
+php = 5.3
 
 testing_api = 2.x
 
