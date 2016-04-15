@@ -8,6 +8,7 @@
  * Class FppBundlesDatabase.
  */
 class FppBundlesDatabase {
+
   const BUNDLE_CLASS_NAME = '\FppBundle';
 
   /**
@@ -509,6 +510,9 @@ class FppBundlesDatabase {
    *
    * @see self::__construct()
    *
+   * @param string $table_name
+   *   The name of DB table to use.
+   *
    * @return \FppBundlesDatabase
    *   An object instance.
    */
@@ -519,4 +523,5 @@ class FppBundlesDatabase {
 
     return self::$instance;
   }
+
 }

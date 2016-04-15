@@ -8,6 +8,7 @@
  * Class FppBundle.
  */
 class FppBundle {
+
   /**
    * The bundle ID.
    *
@@ -146,4 +147,5 @@ class FppBundle {
 
     return $this;
   }
+
 }

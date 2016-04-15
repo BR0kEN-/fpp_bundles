@@ -13,9 +13,3 @@ files[] = classes/FppBundlesException.inc
 configure = admin/structure/fieldable-panels-panes
 
 dependencies[] = fieldable_panels_panes
-
-; Information added by Drupal.org packaging script on 2014-12-24
-version = "7.x-1.2"
-core = "7.x"
-project = "fpp_bundles"
-datestamp = "1419451981"

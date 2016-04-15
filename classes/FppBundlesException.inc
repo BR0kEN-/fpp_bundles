@@ -8,6 +8,7 @@
  * Class FppBundlesException.
  */
 class FppBundlesException extends \Exception {
+
   /**
    * Throw Drupal error and store it to "Recent log messages".
    *
@@ -24,4 +25,5 @@ class FppBundlesException extends \Exception {
 
     return $exception;
   }
+
 }
