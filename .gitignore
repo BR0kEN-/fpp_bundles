@@ -1,2 +1,4 @@
 # Do not add files and folder which names are starting with ".".
 .*
+
+!.gitignore
